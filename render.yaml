@@ -4,7 +4,7 @@ services:
     runtime: docker
     plan: free
     region: singapore
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./deploy/Dockerfile
     healthCheckPath: /health
     autoDeployTrigger: commit
     initialDeployHook: /app/.venv/bin/ipo-analyser collect
@@ -19,7 +19,7 @@ services:
     runtime: docker
     plan: starter
     region: singapore
-    dockerfilePath: ./Dockerfile
+    dockerfilePath: ./deploy/Dockerfile
     schedule: "30 */2 * * *"
     dockerCommand: /app/.venv/bin/ipo-analyser collect --json
     envVars:

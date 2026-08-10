@@ -187,13 +187,14 @@ in IST: 00:00, 02:00, 04:00, and so on. The collector is a finite command and ex
 
 Both application services deploy the `main` branch from GitHub. `railway.toml` selects Railpack;
 the web entrypoint is auto-detected from the root `main.py`, while the collector command and cron
-schedule are configured on its Railway service.
+schedule are configured on its Railway service. The optional Dockerfile lives under `deploy/` so
+Railway does not auto-detect it instead of the native build.
 
 ### Cloud Run
 
-Build with the included `Dockerfile` and pair Cloud Run with Cloud Scheduler and Cloud SQL. Set
-`IPO_DATABASE_URL` to the managed PostgreSQL connection and schedule `ipo-analyser collect --json`
-every two hours.
+Build with `docker build -f deploy/Dockerfile .` and pair Cloud Run with Cloud Scheduler and Cloud
+SQL. Set `IPO_DATABASE_URL` to the managed PostgreSQL connection and schedule
+`ipo-analyser collect --json` every two hours.
 
 ## Project layout
 

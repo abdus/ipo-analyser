@@ -1,6 +1,8 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
     ports:
       - "8000:8000"
     volumes:
@@ -9,7 +11,9 @@ services:
       IPO_DATABASE_URL: sqlite:////data/ipo_analyser.db
 
   collector:
-    build: .
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile
     profiles: ["tools"]
     volumes:
       - ipo-data:/data
