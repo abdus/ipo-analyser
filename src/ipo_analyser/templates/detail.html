@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}{{ ipo.name }} — IPO Analyser{% endblock %}
+{% block content %}
+<a class="compact-back" href="/">← IPO signals</a>
+
+<section class="detail-titlebar">
+  <div class="detail-identity">
+    <div class="detail-badges">
+      <span class="status status-{{ ipo.status }}">{{ ipo.status }}</span>
+      <span class="segment">{{ ipo.segment }}</span>
+      <span class="action-state action-{{ ipo.status }}">
+        {{ 'Actionable now' if ipo.status == 'open' else 'Monitor' if ipo.status == 'upcoming' else 'Review only' }}
+      </span>
+    </div>
+    <h1>{{ ipo.name }}</h1>
+    <div class="compact-timeline">
+      <span>Open <strong>{{ ipo.open_date or '—' }}</strong></span>
+      <span>Close <strong>{{ ipo.close_date or '—' }}</strong></span>
+      <span>List <strong>{{ ipo.listing_date or '—' }}</strong></span>
+    </div>
+  </div>
+  <div class="detail-signal-block">
+    <div class="detail-score signal-{{ ipo.score.signal }}">{{ ipo.score.total }}</div>
+    <div>
+      <span>LISTING SIGNAL</span>
+      <strong>{{ ipo.score.signal }}</strong>
+      <small>{{ ipo.score.confidence }}% data confidence{% if ipo.score.provisional %} · provisional{% endif %}</small>
+    </div>
+  </div>
+</section>
+
+<section class="detail-kpi-strip">
+  <div><span>IPO price</span><strong>{{ ipo.price_upper|money }}</strong></div>
+  <div><span>Average GMP</span><strong>{{ ipo.gmp|money }}</strong><small>{{ ipo.gmp_sources|length }} sources · {{ ipo.gmp_agreement }}</small></div>
+  <div><span>Implied listing</span><strong>{{ ipo.implied_listing_price|money }}</strong></div>
+  <div><span>Implied gain</span><strong class="number-{{ 'positive' if (ipo.implied_gain_pct or 0) >= 0 else 'negative' }}">{{ ipo.implied_gain_pct|percent(true) }}</strong></div>
+  <div><span>7D momentum</span><strong class="trend-{{ ipo.trend }}">{{ '↗ Rising' if ipo.trend == 'rising' else '↘ Falling' if ipo.trend == 'falling' else '→ Flat' }}</strong><small>3D {{ ipo.delta_3d|money }} · 7D {{ ipo.delta_7d|money }}</small></div>
+  <div><span>Total demand</span><strong>{{ ipo.subscription.total|multiple }}</strong><small>{{ ipo.subscription.source or 'Pending' }}</small></div>
+  <div><span>Market</span><strong class="market-{{ ipo.market.sentiment }}">{{ ipo.market.sentiment }}</strong><small>Today {{ ipo.market.day_average|percent(true) }} · 7D {{ ipo.market.week_average|percent(true) }}</small></div>
+</section>
+
+{% if ipo.score.provisional %}
+<div class="compact-notice">Provisional score: unavailable factors receive neutral points.</div>
+{% endif %}
+
+<section class="compact-chart-grid">
+  <article class="workspace-panel">
+    <div class="workspace-heading">
+      <div><span>GMP · LAST 7 DAYS</span><h2>Price momentum</h2></div>
+      <strong class="trend-{{ ipo.trend }}">{{ ipo.gmp|money }}</strong>
+    </div>
+    {% if ipo.history %}
+    <div class="compact-chart" role="img" aria-label="Seven-day GMP trend by source and consensus average">
+      <svg viewBox="0 0 730 250" preserveAspectRatio="none" aria-hidden="true">
+        {% for tick in ipo.history_chart.y_ticks %}
+        <line class="chart-grid" x1="54" x2="706" y1="{{ tick.y }}" y2="{{ tick.y }}"/>
+        <text class="chart-y-label" x="45" y="{{ tick.y + 4 }}">₹{{ "{:.0f}".format(tick.value) }}</text>
+        {% endfor %}
+        {% for series in ipo.history_chart.series if series.key != 'consensus' %}
+        <polyline class="gmp-source-line gmp-{{ series.key }}" points="{{ series.points }}"/>
+          {% for point in series.coordinates %}
+          <circle class="gmp-source-dot gmp-{{ series.key }}" cx="{{ point.x }}" cy="{{ point.y }}" r="3"><title>{{ series.label }} · {{ point.date }}: {{ point.gmp|money }}</title></circle>
+          {% endfor %}
+        {% endfor %}
+        {% for series in ipo.history_chart.series if series.key == 'consensus' %}
+        <polyline class="gmp-consensus-line" points="{{ series.points }}"/>
+          {% for point in series.coordinates %}
+          <circle class="gmp-consensus-dot" cx="{{ point.x }}" cy="{{ point.y }}" r="4"><title>Consensus average · {{ point.date }}: {{ point.gmp|money }}</title></circle>
+          {% endfor %}
+        {% endfor %}
+        {% for label in ipo.history_chart.x_labels %}
+        <text class="chart-x-label" x="{{ label.x }}" y="242">{{ label.label }}</text>
+        {% endfor %}
+      </svg>
+    </div>
+    <div class="gmp-chart-legend" aria-label="GMP chart series">
+      {% for series in ipo.history_chart.series %}
+      {% if series.url %}<a href="{{ series.url }}" target="_blank" rel="noreferrer" class="gmp-legend-item">{% else %}<div class="gmp-legend-item consensus">{% endif %}
+        <i class="gmp-{{ series.key }}"></i><span>{{ series.label }}</span><strong>{{ series.last|money }}</strong>
+      {% if series.url %}</a>{% else %}</div>{% endif %}
+      {% endfor %}
+    </div>
+    {% else %}<div class="compact-empty">No GMP history available.</div>{% endif %}
+  </article>
+
+  <article class="workspace-panel">
+    <div class="workspace-heading">
+      <div><span>SUBSCRIPTION · LAST 7 DAYS</span><h2>Investor demand</h2></div>
+      <strong>{{ ipo.subscription.total|multiple }}</strong>
+    </div>
+    {% if ipo.subscription_state == 'available' %}
+    <div class="compact-demand-grid">
+      <div><span>QIB</span><strong>{{ ipo.subscription.qib|multiple }}</strong></div>
+      <div><span>NII</span><strong>{{ ipo.subscription.nii|multiple }}</strong></div>
+      <div><span>Retail</span><strong>{{ ipo.subscription.retail|multiple }}</strong></div>
+      <div><span>Total</span><strong>{{ ipo.subscription.total|multiple }}</strong></div>
+    </div>
+    {% if ipo.subscription_history %}
+    <div class="compact-legend">
+      {% for series in ipo.subscription_chart.series %}<span class="legend-{{ series.key }}"><i></i>{{ series.label }}</span>{% endfor %}
+    </div>
+    <div class="compact-chart subscription-compact-chart" role="img" aria-label="Seven-day category subscription trend">
+      <svg viewBox="0 0 730 250" preserveAspectRatio="none" aria-hidden="true">
+        {% for tick in ipo.subscription_chart.y_ticks %}
+        <line class="chart-grid" x1="54" x2="706" y1="{{ tick.y }}" y2="{{ tick.y }}"/>
+        <text class="chart-y-label" x="45" y="{{ tick.y + 4 }}">{{ "{:.1f}".format(tick.value) }}×</text>
+        {% endfor %}
+        {% for series in ipo.subscription_chart.series %}
+        <polyline class="subscription-line series-{{ series.key }}" points="{{ series.points }}"/>
+          {% for point in series.coordinates %}
+          <circle class="subscription-dot series-{{ series.key }}" cx="{{ point.x }}" cy="{{ point.y }}" r="3.5"><title>{{ point.date }} · {{ series.label }}: {{ point.value|multiple }}</title></circle>
+          {% endfor %}
+        {% endfor %}
+        {% for label in ipo.subscription_chart.x_labels %}
+        <text class="chart-x-label" x="{{ label.x }}" y="242">{{ label.label }}</text>
+        {% endfor %}
+      </svg>
+    </div>
+    {% endif %}
+    {% else %}<div class="compact-empty"><strong>{{ 'Not open yet' if ipo.subscription_state == 'not_open' else 'Data pending' }}</strong><span>{{ ipo.subscription_message }}</span></div>{% endif %}
+  </article>
+</section>
+
+<section class="compact-bottom-grid">
+  <article class="workspace-panel">
+    <div class="workspace-heading">
+      <div><span>TRANSPARENT SCORE</span><h2>Why {{ ipo.score.total }}/100?</h2></div>
+      <small>{{ ipo.score.confidence }}% confidence</small>
+    </div>
+    <div class="compact-components">
+      {% for component in ipo.score.components %}
+      <div class="compact-component {{ 'unavailable' if not component.available else '' }}">
+        <div><strong>{{ component.label }}</strong><span>{{ component.detail }}</span></div>
+        <b>{{ "{:.1f}".format(component.points) }}<small>/{{ component.maximum|int }}</small></b>
+        <div class="bar"><i style="width: {{ component.points / component.maximum * 100 }}%"></i></div>
+      </div>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="workspace-panel context-panel">
+    <div class="workspace-heading"><div><span>MARKET CONTEXT</span><h2>{{ ipo.market.sentiment|capitalize }}</h2></div></div>
+    {% for index in ipo.market.indices %}
+    <div class="compact-market-row">
+      <div><strong>{{ index.name }}</strong><span>{{ "{:,.2f}".format(index.value) }}</span></div>
+      <div><span>Today</span><strong class="number-{{ 'positive' if (index.day_change or 0) >= 0 else 'negative' }}">{{ index.day_change|percent(true) }}</strong></div>
+      <div><span>7D</span><strong class="number-{{ 'positive' if (index.seven_day_change or 0) >= 0 else 'negative' }}">{{ index.seven_day_change|percent(true) }}</strong></div>
+    </div>
+    {% endfor %}
+    <div class="data-quality-row">
+      <span>GMP agreement</span><strong>{{ ipo.gmp_agreement }}</strong>
+      <span>Subscription source</span><strong>{{ ipo.subscription.source or '—' }}</strong>
+    </div>
+  </article>
+</section>
+{% endblock %}

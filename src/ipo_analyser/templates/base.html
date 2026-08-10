@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>{% block title %}IPO Analyser{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-mark">IA</span>
+      <span><strong>IPO Analyser</strong><small>Listing-gain research</small></span>
+    </a>
+    <a class="api-link" href="/docs">API docs</a>
+  </header>
+  <main class="page-shell">{% block content %}{% endblock %}</main>
+  <footer>
+    GMP is unofficial and unregulated. Signals are mechanical research aids, not investment advice
+    or a guarantee of listing performance.
+  </footer>
+</body>
+</html>

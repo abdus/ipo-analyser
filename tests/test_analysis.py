@@ -1,0 +1,111 @@
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+
+from ipo_analyser.db import Base
+from ipo_analyser.models import IPO, GMPObservation, MarketObservation, SubscriptionObservation
+from ipo_analyser.services.analysis import build_snapshot
+
+
+def test_snapshot_consensus_trend_calculations_and_score():
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    now = datetime(2026, 8, 10, 12, tzinfo=UTC)
+    with Session(engine) as session:
+        ipo = IPO(
+            slug="shiprocket",
+            name="Shiprocket",
+            segment="mainboard",
+            status="upcoming",
+            price_upper=Decimal("97"),
+            price_lower=Decimal("97"),
+        )
+        session.add(ipo)
+        session.flush()
+        session.add_all(
+            [
+                GMPObservation(
+                    ipo_id=ipo.id,
+                    source="iporise",
+                    observed_at=now - timedelta(days=40),
+                    premium=Decimal("5"),
+                ),
+                GMPObservation(
+                    ipo_id=ipo.id,
+                    source="iporise",
+                    observed_at=now - timedelta(days=4),
+                    premium=Decimal("14"),
+                ),
+                GMPObservation(
+                    ipo_id=ipo.id,
+                    source="iporise",
+                    observed_at=now,
+                    premium=Decimal("26"),
+                ),
+                GMPObservation(
+                    ipo_id=ipo.id,
+                    source="ipogram",
+                    observed_at=now - timedelta(hours=1),
+                    premium=Decimal("24"),
+                ),
+                SubscriptionObservation(
+                    ipo_id=ipo.id,
+                    source="ipogram",
+                    observed_at=now,
+                    qib=Decimal("8.2"),
+                    nii=Decimal("12.4"),
+                    retail=Decimal("5.7"),
+                    total=Decimal("8.1"),
+                ),
+                SubscriptionObservation(
+                    ipo_id=ipo.id,
+                    source="iporise",
+                    observed_at=now - timedelta(hours=2),
+                    qib=Decimal("1.1"),
+                    nii=Decimal("2.2"),
+                    retail=Decimal("3.3"),
+                    total=Decimal("2.4"),
+                ),
+                MarketObservation(
+                    index_name="NIFTY 50",
+                    source="test",
+                    observed_at=now - timedelta(days=7),
+                    value=Decimal("24000"),
+                    percent_change=Decimal("0.1"),
+                ),
+                MarketObservation(
+                    index_name="NIFTY 50",
+                    source="test",
+                    observed_at=now,
+                    value=Decimal("24432"),
+                    percent_change=Decimal("0.62"),
+                ),
+            ]
+        )
+        session.commit()
+        snapshot = build_snapshot(session, ipo)
+
+    assert snapshot["gmp"] == 25.0
+    assert snapshot["gmp_agreement"] == "high"
+    assert snapshot["implied_listing_price"] == 122.0
+    assert round(snapshot["implied_gain_pct"], 2) == 25.77
+    assert snapshot["delta_7d"] == 11.0
+    assert snapshot["trend"] == "rising"
+    assert snapshot["history_window_days"] == 7
+    assert snapshot["history_coverage_days"] == 2
+    assert all(point["date"] >= "2026-08-04" for point in snapshot["history"])
+    assert snapshot["history_chart"]["points"]
+    assert [series["label"] for series in snapshot["history_chart"]["series"]] == [
+        "ipogram",
+        "iporise",
+        "Consensus average",
+    ]
+    assert snapshot["history_chart"]["series"][-1]["last"] == 25.0
+    assert snapshot["subscription"]["qib"] == 1.1
+    assert snapshot["subscription"]["source"] == "iporise"
+    assert snapshot["subscription_coverage_days"] == 1
+    assert snapshot["subscription_chart"]["series"]
+    assert 0 <= snapshot["score"]["total"] <= 100
+    assert len(snapshot["score"]["components"]) == 6

@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ipo-data:/data
+    environment:
+      IPO_DATABASE_URL: sqlite:////data/ipo_analyser.db
+
+  collector:
+    build: .
+    profiles: ["tools"]
+    volumes:
+      - ipo-data:/data
+    environment:
+      IPO_DATABASE_URL: sqlite:////data/ipo_analyser.db
+    command: ["uv", "run", "ipo-analyser", "collect"]
+
+volumes:
+  ipo-data:
