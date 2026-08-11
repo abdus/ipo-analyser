@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from ipo_analyser.db import Base
 from ipo_analyser.models import IPO, GMPObservation, MarketObservation, SubscriptionObservation
-from ipo_analyser.services.analysis import build_snapshot
+from ipo_analyser.services.analysis import _subscription_line_chart, build_snapshot
 
 
 def test_snapshot_consensus_trend_calculations_and_score():
@@ -106,6 +106,44 @@ def test_snapshot_consensus_trend_calculations_and_score():
     assert snapshot["subscription"]["qib"] == 1.1
     assert snapshot["subscription"]["source"] == "iporise"
     assert snapshot["subscription_coverage_days"] == 1
+    assert snapshot["subscription_observation_count"] == 2
+    assert snapshot["subscription_chart"]["interval_hours"] == 1
+    assert snapshot["subscription_chart"]["x_labels"][0]["label"] == "15:30"
+    assert snapshot["subscription_chart"]["x_labels"][-1]["label"] == "17:30"
     assert snapshot["subscription_chart"]["series"]
     assert 0 <= snapshot["score"]["total"] <= 100
     assert len(snapshot["score"]["components"]) == 6
+
+
+def test_subscription_chart_uses_actual_range_and_adaptive_intervals():
+    start = datetime(2026, 8, 10, 4, 30, tzinfo=UTC)
+
+    for span_hours, expected_interval in ((4, 1), (10, 2), (20, 4), (40, 8), (80, 24)):
+        history = [
+            {
+                "observed_at": start.isoformat(),
+                "label": "10 Aug 10:00 IST",
+                "source": "test",
+                "qib": 0.1,
+                "nii": 0.2,
+                "retail": 0.3,
+                "total": 0.2,
+            },
+            {
+                "observed_at": (start + timedelta(hours=span_hours)).isoformat(),
+                "label": "latest",
+                "source": "test",
+                "qib": 1.1,
+                "nii": 1.2,
+                "retail": 1.3,
+                "total": 1.2,
+            },
+        ]
+
+        chart = _subscription_line_chart(history)
+
+        assert chart["interval_hours"] == expected_interval
+        assert chart["series"][0]["coordinates"][0]["x"] == 54.0
+        assert chart["series"][0]["coordinates"][-1]["x"] == 706.0
+        assert chart["x_labels"][0]["x"] == 54.0
+        assert chart["x_labels"][-1]["x"] == 706.0

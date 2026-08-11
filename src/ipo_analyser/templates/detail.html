@@ -85,7 +85,7 @@
 
   <article class="workspace-panel">
     <div class="workspace-heading">
-      <div><span>SUBSCRIPTION · LAST 7 DAYS</span><h2>Investor demand</h2></div>
+      <div><span>SUBSCRIPTION · {{ ipo.subscription_chart.range_label|upper }}</span><h2>Investor demand</h2></div>
       <strong>{{ ipo.subscription.total|multiple }}</strong>
     </div>
     {% if ipo.subscription_state == 'available' %}
@@ -99,7 +99,7 @@
     <div class="compact-legend">
       {% for series in ipo.subscription_chart.series %}<span class="legend-{{ series.key }}"><i></i>{{ series.label }}</span>{% endfor %}
     </div>
-    <div class="compact-chart subscription-compact-chart" role="img" aria-label="Seven-day category subscription trend">
+    <div class="compact-chart subscription-compact-chart" role="img" aria-label="Category subscription trend across all available observations">
       <svg viewBox="0 0 730 250" preserveAspectRatio="none" aria-hidden="true">
         {% for tick in ipo.subscription_chart.y_ticks %}
         <line class="chart-grid" x1="54" x2="706" y1="{{ tick.y }}" y2="{{ tick.y }}"/>
@@ -108,7 +108,7 @@
         {% for series in ipo.subscription_chart.series %}
         <polyline class="subscription-line series-{{ series.key }}" points="{{ series.points }}"/>
           {% for point in series.coordinates %}
-          <circle class="subscription-dot series-{{ series.key }}" cx="{{ point.x }}" cy="{{ point.y }}" r="3.5"><title>{{ point.date }} · {{ series.label }}: {{ point.value|multiple }}</title></circle>
+          <circle class="subscription-dot series-{{ series.key }}" cx="{{ point.x }}" cy="{{ point.y }}" r="3.5"><title>{{ point.label }} · {{ point.source }} · {{ series.label }}: {{ point.value|multiple }}</title></circle>
           {% endfor %}
         {% endfor %}
         {% for label in ipo.subscription_chart.x_labels %}

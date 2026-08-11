@@ -29,8 +29,8 @@ The database is created as `ipo_analyser.db` in the current directory.
 - Timestamped GMP history, a 7-day daily-consensus trend chart, 3/7-day changes, and
   rising/flat/falling direction.
 - IPO price, implied listing price, rupee gain, and percentage gain.
-- Latest QIB, NII/HNI, Retail, and total subscription multiples with a 7-day window showing every
-  available bidding-day observation.
+- Latest QIB, NII/HNI, Retail, and total subscription multiples with every available timestamped
+  observation and an adaptive hourly/day-scale chart.
 - Nifty 50 and Sensex daily and seven-day performance.
 - Transparent Listing Signal with individual factor contributions and data-confidence score.
 - FastAPI HTML dashboard plus `/api/ipos`, `/api/ipos/{slug}`, and `/api/market`.

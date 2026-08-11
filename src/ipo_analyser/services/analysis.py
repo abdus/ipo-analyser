@@ -3,6 +3,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from statistics import fmean
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -11,6 +12,7 @@ from ipo_analyser.models import IPO, GMPObservation, MarketObservation, Subscrip
 
 TREND_WINDOW_DAYS = 7
 SUBSCRIPTION_SOURCE_PRIORITY = {"iporise": 2, "ipogram": 1}
+IST = ZoneInfo("Asia/Kolkata")
 
 
 @dataclass(slots=True)
@@ -180,7 +182,13 @@ def build_snapshot(session: Session, ipo: IPO, market: dict | None = None) -> di
         "subscription_message": subscription_message,
         "subscription_history": subscription_history,
         "subscription_chart": subscription_chart,
-        "subscription_coverage_days": len(subscription_history),
+        "subscription_coverage_days": len(
+            {
+                datetime.fromisoformat(point["observed_at"]).astimezone(IST).date()
+                for point in subscription_history
+            }
+        ),
+        "subscription_observation_count": len(subscription_history),
         "market": market,
         "score": score,
     }
@@ -415,25 +423,24 @@ def _history_delta(history: list[dict], days: int, current: float | None) -> flo
 def _subscription_history(rows: list[SubscriptionObservation]) -> list[dict]:
     if not rows:
         return []
-    per_day_source: dict[tuple[date, str], SubscriptionObservation] = {}
-    for row in rows:
-        day = _as_aware(row.observed_at).date()
-        key = (day, row.source)
-        current = per_day_source.get(key)
-        if current is None or _as_aware(row.observed_at) > _as_aware(current.observed_at):
-            per_day_source[key] = row
 
-    grouped: dict[date, list[SubscriptionObservation]] = defaultdict(list)
-    for (day, _source), row in per_day_source.items():
-        grouped[day].append(row)
-    latest_day = max(grouped)
-    cutoff = latest_day - timedelta(days=TREND_WINDOW_DAYS - 1)
+    # Preserve every published/collected timestamp. If two sources happen to publish at the exact
+    # same instant, prefer the higher-priority adapter instead of drawing duplicate points.
+    by_timestamp: dict[datetime, SubscriptionObservation] = {}
+    for row in rows:
+        observed_at = _as_aware(row.observed_at)
+        current = by_timestamp.get(observed_at)
+        if current is None or _subscription_rank(row) > _subscription_rank(current):
+            by_timestamp[observed_at] = row
+
     history: list[dict] = []
-    for day, observations in sorted(grouped.items()):
-        if day < cutoff:
-            continue
-        selected = max(observations, key=_subscription_rank)
-        point: dict = {"date": day.isoformat()}
+    for observed_at, selected in sorted(by_timestamp.items()):
+        local_time = observed_at.astimezone(IST)
+        point: dict = {
+            "observed_at": observed_at.isoformat(),
+            "label": local_time.strftime("%d %b %H:%M IST"),
+            "source": selected.source,
+        }
         for key in ("qib", "nii", "retail", "total"):
             value = getattr(selected, key)
             point[key] = float(value) if value is not None else None
@@ -459,12 +466,21 @@ def _subscription_line_chart(history: list[dict]) -> dict:
         point[key] for point in history for key, _label in series_meta if point.get(key) is not None
     ]
     if not all_values:
-        return {"series": [], "x_labels": [], "y_ticks": []}
+        return {
+            "series": [],
+            "x_labels": [],
+            "y_ticks": [],
+            "range_label": "No history",
+            "interval_hours": None,
+        }
 
     left, right, top, bottom = 54.0, 706.0, 20.0, 218.0
     chart_max = max(max(all_values) * 1.12, 1.0)
-    window_end = date.fromisoformat(history[-1]["date"])
-    window_start = window_end - timedelta(days=TREND_WINDOW_DAYS - 1)
+    window_start = datetime.fromisoformat(history[0]["observed_at"])
+    window_end = datetime.fromisoformat(history[-1]["observed_at"])
+    span_seconds = max((window_end - window_start).total_seconds(), 0.0)
+    span_hours = span_seconds / 3600
+    interval_hours = _subscription_tick_interval(span_hours)
     series = []
     for key, label in series_meta:
         coordinates = []
@@ -472,11 +488,24 @@ def _subscription_line_chart(history: list[dict]) -> dict:
             value = point.get(key)
             if value is None:
                 continue
-            point_day = date.fromisoformat(point["date"])
-            ratio = (point_day - window_start).days / (TREND_WINDOW_DAYS - 1)
+            observed_at = datetime.fromisoformat(point["observed_at"])
+            ratio = (
+                (observed_at - window_start).total_seconds() / span_seconds
+                if span_seconds
+                else 0.5
+            )
             x = left + ratio * (right - left)
             y = bottom - value / chart_max * (bottom - top)
-            coordinates.append({"x": x, "y": y, "date": point["date"], "value": value})
+            coordinates.append(
+                {
+                    "x": x,
+                    "y": y,
+                    "observed_at": point["observed_at"],
+                    "label": point["label"],
+                    "source": point["source"],
+                    "value": value,
+                }
+            )
         if not coordinates:
             continue
         series.append(
@@ -489,18 +518,74 @@ def _subscription_line_chart(history: list[dict]) -> dict:
             }
         )
 
-    x_labels = [
-        {
-            "x": left + index / (TREND_WINDOW_DAYS - 1) * (right - left),
-            "label": (window_start + timedelta(days=index)).strftime("%m-%d"),
-        }
-        for index in range(TREND_WINDOW_DAYS)
-    ]
+    x_labels = _subscription_x_labels(
+        window_start, window_end, interval_hours, left, right, span_seconds
+    )
     y_ticks = [
         {"y": top + index / 4 * (bottom - top), "value": chart_max * (1 - index / 4)}
         for index in range(5)
     ]
-    return {"series": series, "x_labels": x_labels, "y_ticks": y_ticks}
+    return {
+        "series": series,
+        "x_labels": x_labels,
+        "y_ticks": y_ticks,
+        "range_label": _subscription_range_label(window_start, window_end),
+        "interval_hours": interval_hours,
+    }
+
+
+def _subscription_tick_interval(span_hours: float) -> int:
+    for maximum_span, interval in (
+        (6, 1),
+        (12, 2),
+        (24, 4),
+        (48, 8),
+        (72, 12),
+        (144, 24),
+        (288, 48),
+    ):
+        if span_hours <= maximum_span:
+            return interval
+    return max(72, int((span_hours / 6 + 23) // 24 * 24))
+
+
+def _subscription_x_labels(
+    start: datetime,
+    end: datetime,
+    interval_hours: int,
+    left: float,
+    right: float,
+    span_seconds: float,
+) -> list[dict]:
+    if not span_seconds:
+        return [{"x": (left + right) / 2, "label": start.astimezone(IST).strftime("%H:%M")}]
+
+    ticks = [start]
+    tick = start + timedelta(hours=interval_hours)
+    while tick < end:
+        ticks.append(tick)
+        tick += timedelta(hours=interval_hours)
+    if ticks[-1] != end:
+        ticks.append(end)
+
+    crosses_date = start.astimezone(IST).date() != end.astimezone(IST).date()
+    return [
+        {
+            "x": left + (tick - start).total_seconds() / span_seconds * (right - left),
+            "label": tick.astimezone(IST).strftime("%d %b %H:%M" if crosses_date else "%H:%M"),
+        }
+        for tick in ticks
+    ]
+
+
+def _subscription_range_label(start: datetime, end: datetime) -> str:
+    local_start = start.astimezone(IST)
+    local_end = end.astimezone(IST)
+    if start == end:
+        return local_start.strftime("%d %b · %H:%M IST")
+    if local_start.date() == local_end.date():
+        return f"{local_start:%d %b · %H:%M}–{local_end:%H:%M} IST"
+    return f"{local_start:%d %b %H:%M} → {local_end:%d %b %H:%M} IST"
 
 
 def _score(
