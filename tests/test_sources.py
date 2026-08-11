@@ -69,13 +69,16 @@ def test_iporise_subscription_history_parser():
         "https://example.test/subscription",
         "Optimystix Entertainment",
         "optimystix-entertainment-india",
+        now=datetime(2026, 8, 10, 15, 20, tzinfo=IST),
     )
     assert len(records) == 2
     assert records[0].qib == Decimal("1.02")
     assert records[0].retail == Decimal("0.55")
+    assert records[0].observed_at.hour == 18
     assert records[1].nii == Decimal("0.21")
     assert records[1].total == Decimal("0.77")
     assert records[1].observed_at.date().isoformat() == "2026-08-10"
+    assert records[1].observed_at.strftime("%H:%M") == "15:20"
 
 
 def test_ipogram_gmp_and_subscription_parser():

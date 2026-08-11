@@ -138,7 +138,9 @@ class IPORiseSource:
         ipo_slug: str,
         segment: str = "unknown",
         status: str = "unknown",
+        now: datetime | None = None,
     ) -> list[SubscriptionRecord]:
+        now = (now or datetime.now(IST)).astimezone(IST)
         soup = BeautifulSoup(html, "html.parser")
         heading = soup.find(
             lambda tag: (
@@ -155,7 +157,7 @@ class IPORiseSource:
         for details in container.find_all("details", recursive=False):
             summary = details.find("summary")
             observed_at = _subscription_datetime(
-                summary.get_text(" ", strip=True) if summary else ""
+                summary.get_text(" ", strip=True) if summary else "", now
             )
             table = details.find("table")
             if observed_at is None or table is None:
@@ -224,12 +226,14 @@ def _status(value: str) -> str:
     return "open" if normalized in {"live", "ongoing"} else normalized
 
 
-def _subscription_datetime(value: str) -> datetime | None:
+def _subscription_datetime(value: str, now: datetime) -> datetime | None:
     match = re.search(r"(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), [A-Z][a-z]{2} \d{2}, \d{4}", value)
     if not match:
         return None
     try:
         day = datetime.strptime(match.group(0), "%a, %b %d, %Y").date()
+        if day == now.date():
+            return now
         return datetime.combine(day, time(18, 0), tzinfo=IST)
     except ValueError:
         return None
