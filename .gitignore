@@ -14,3 +14,8 @@ dist/
 .agents/
 .railway/
 .railway-config-pull-*/
+# Static export and CI working files
+site/
+history/
+history.sql
+collect.json

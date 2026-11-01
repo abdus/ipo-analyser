@@ -29,11 +29,11 @@
 
 <section class="table-controls">
   <nav class="filters" aria-label="IPO status filters">
-    {% for value, label in [('all', 'All'), ('open', 'Open'), ('upcoming', 'Upcoming'), ('closed', 'Closed'), ('listed', 'Listed')] %}
-    <a class="{{ 'active' if selected_status == value else '' }}" href="/?status={{ value }}&sort={{ selected_sort }}&direction={{ direction }}">{{ label }}</a>
+    {% for value, label in status_filters %}
+    <a class="{{ 'active' if selected_status == value else '' }}" data-status="{{ value }}" href="{{ root }}?status={{ value }}&sort={{ selected_sort }}&direction={{ direction }}">{{ label }}</a>
     {% endfor %}
   </nav>
-  <form class="table-search" method="get">
+  <form class="table-search" method="get" action="{{ root }}">
     <input type="hidden" name="status" value="{{ selected_status }}">
     <input type="hidden" name="sort" value="{{ selected_sort }}">
     <input type="hidden" name="direction" value="{{ direction }}">
@@ -45,12 +45,12 @@
 {% if ipos %}
 {% macro sort_header(key, label) -%}
   {% set next_direction = 'asc' if selected_sort == key and direction == 'desc' else 'desc' %}
-  <a href="/?status={{ selected_status }}&sort={{ key }}&direction={{ next_direction }}{% if query %}&q={{ query|urlencode }}{% endif %}">
+  <a data-sort="{{ key }}" data-label="{{ label }}" href="{{ root }}?status={{ selected_status }}&sort={{ key }}&direction={{ next_direction }}{% if query %}&q={{ query|urlencode }}{% endif %}">
     {{ label }}{% if selected_sort == key %}<span>{{ '↓' if direction == 'desc' else '↑' }}</span>{% endif %}
   </a>
 {%- endmacro %}
 <section class="analysis-table-wrap">
-  <table class="analysis-table">
+  <table class="analysis-table" data-ipo-table>
     <thead>
       <tr>
         <th>{{ sort_header('name', 'IPO') }}</th>
@@ -65,9 +65,9 @@
     </thead>
     <tbody>
       {% for ipo in ipos %}
-      <tr class="signal-row-{{ ipo.score.signal }}">
+      <tr class="signal-row-{{ ipo.score.signal }}" data-order="{{ ipo.order }}" data-status="{{ ipo.status }}" data-name="{{ ipo.name }}" data-score="{{ ipo.score.total }}" data-gmp="{{ ipo.gmp if ipo.gmp is not none else '' }}" data-gain="{{ ipo.implied_gain_pct if ipo.implied_gain_pct is not none else '' }}" data-qib="{{ ipo.subscription.qib if ipo.subscription.qib is not none else '' }}" data-open-date="{{ ipo.open_date or '' }}">
         <td class="ipo-cell">
-          <a href="/ipo/{{ ipo.slug }}">{{ ipo.name }}</a>
+          <a href="{{ ipo_url(ipo.slug) }}">{{ ipo.name }}</a>
           <div><span class="status status-{{ ipo.status }}">{{ ipo.status }}</span><span class="segment">{{ ipo.segment }}</span></div>
         </td>
         <td class="signal-cell">
@@ -114,7 +114,7 @@
           <div><span>Open</span><strong>{{ ipo.open_date or '—' }}</strong></div>
           <div><span>List</span><strong>{{ ipo.listing_date or '—' }}</strong></div>
         </td>
-        <td class="row-action"><a href="/ipo/{{ ipo.slug }}" aria-label="Inspect {{ ipo.name }}">→</a></td>
+        <td class="row-action"><a href="{{ ipo_url(ipo.slug) }}" aria-label="Inspect {{ ipo.name }}">→</a></td>
       </tr>
       {% endfor %}
     </tbody>

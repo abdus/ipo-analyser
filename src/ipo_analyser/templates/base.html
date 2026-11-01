@@ -5,20 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark light">
   <title>{% block title %}IPO Analyser{% endblock %}</title>
-  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="{{ root }}static/app.css">
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="/">
+    <a class="brand" href="{{ root }}">
       <span class="brand-mark">IA</span>
       <span><strong>IPO Analyser</strong><small>Listing-gain research</small></span>
     </a>
+    {% if static_site %}
+    <a class="api-link" href="{{ root }}api/ipos.json">JSON data</a>
+    {% else %}
     <a class="api-link" href="/docs">API docs</a>
+    {% endif %}
   </header>
   <main class="page-shell">{% block content %}{% endblock %}</main>
   <footer>
     GMP is unofficial and unregulated. Signals are mechanical research aids, not investment advice
     or a guarantee of listing performance.
+    {% if static_site %}
+    <br>Data refreshed {{ generated_label }}.
+    {% if failed_sources %}Unavailable in the latest run: {{ failed_sources|join(', ') }}; their earlier observations are still used.{% endif %}
+    {% endif %}
   </footer>
+  {% if static_site %}<script src="{{ root }}static/app.js" defer></script>{% endif %}
 </body>
 </html>

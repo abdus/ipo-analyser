@@ -1,5 +1,8 @@
 # IPO Analyser
 
+**Live dashboard: <https://abdus.github.io/ipo-analyser/>**, refreshed every two hours by GitHub
+Actions.
+
 A self-contained Indian IPO listing-gain research dashboard. It stores timestamped observations,
 compares unofficial GMP sources, tracks QIB/NII/Retail demand, adds Nifty/Sensex context, and shows
 the exact contribution of every factor in its 0–100 signal.
@@ -20,6 +23,13 @@ uv run ipo-analyser serve --reload
 Open <http://127.0.0.1:8000>. Interactive API docs are at
 <http://127.0.0.1:8000/docs>.
 
+To build the static site that GitHub Pages serves instead:
+
+```bash
+uv run ipo-analyser export site
+python3 -m http.server -d site 8000
+```
+
 SQLite is the default, so no account, API key, frontend toolchain, or separate database is needed.
 The database is created as `ipo_analyser.db` in the current directory.
 
@@ -34,6 +44,8 @@ The database is created as `ipo_analyser.db` in the current directory.
 - Nifty 50 and Sensex daily and seven-day performance.
 - Transparent Listing Signal with individual factor contributions and data-confidence score.
 - FastAPI HTML dashboard plus `/api/ipos`, `/api/ipos/{slug}`, and `/api/market`.
+- A static export of the same pages and JSON, with filtering, search, and sorting done in the
+  browser, published to GitHub Pages.
 - Idempotent collection suitable for cron or a cloud scheduler.
 - SQLite locally; PostgreSQL is supported for multi-instance deployment.
 
@@ -54,6 +66,13 @@ uv run ipo-analyser collect --json
 
 # Serve on the local network
 uv run ipo-analyser serve --host 0.0.0.0 --port 8000
+
+# Write the static site (pages plus JSON) to ./site
+uv run ipo-analyser export site --report collect.json
+
+# Save and restore the SQLite history as a text SQL dump
+uv run ipo-analyser dump-history history.sql
+uv run ipo-analyser restore-history history.sql
 
 # Test and lint
 uv run pytest
@@ -114,87 +133,56 @@ IPO_DATABASE_URL='postgresql+psycopg://user:password@host/database' \
   uv run ipo-analyser collect
 ```
 
-## Scheduling
+## Deployment: GitHub Pages
 
-Run the collector every two hours. Example cron entry for a machine already configured to use IST:
+`.github/workflows/pages.yml` runs on `30 */2 * * *` (UTC, which is the even hour in IST), on
+every push to `main`, and on demand from the Actions tab. Each run:
 
-```cron
-0 */2 * * * cd /path/to/ipo-analyser && uv run ipo-analyser collect
+1. restores the database from `history.sql` on the `data` branch;
+2. runs `collect --json`;
+3. runs `export site`, which writes `index.html`, `ipo/<slug>/index.html`, and the JSON API;
+4. uploads `site/` and deploys it to Pages;
+5. dumps the database back to `history.sql` and commits it to `data` when it changed.
+
+History lives in git rather than the Actions cache, which GitHub evicts. The dump is plain SQL, so
+each commit stores only the new rows. To rebuild locally from the published history:
+
+```bash
+git fetch origin data
+git show origin/data:history.sql > history.sql
+uv run ipo-analyser restore-history history.sql
 ```
 
-Because observations are unique by IPO, source, and source timestamp, replaying published history
-does not duplicate those points. Fresh current-page and subscription snapshots receive collection
-timestamps and are retained so their progression can be analysed later.
+A source that fails, for example because it blocks GitHub's runners, does not stop the run. Its
+earlier observations stay in the database and the site still publishes. The failure appears as a
+warning on the run, in the run summary, in the site footer, and in `api/status.json`.
 
-## Deployment
+The static site has the same JSON as the server, at relative paths:
 
-### Docker Compose
+| Server | Static site |
+| --- | --- |
+| `/api/ipos` | `api/ipos.json` |
+| `/api/ipos/{slug}` | `api/ipos/{slug}.json` |
+| `/api/market` | `api/market.json` |
+| — | `api/status.json` (generation time and the last collection report) |
+
+The interactive `/docs` page and `/health` exist only on the server.
+
+### Self-hosting the server
+
+The FastAPI server still works anywhere Python or Docker runs:
 
 ```bash
 docker compose up --build -d app
 docker compose --profile tools run --rm collector
 ```
 
-The named volume persists the SQLite database. Schedule the collector command with the host's cron
-or your platform's scheduled-job feature.
+The named volume persists the SQLite database. Schedule the collector with the host's cron.
+PostgreSQL also works; set `IPO_DATABASE_URL` as shown under Configuration.
 
-### Render Blueprint (recommended)
-
-The included `render.yaml` provisions three resources in Singapore:
-
-- a Docker web service;
-- a shared PostgreSQL database for durable history;
-- a cron job running the prebuilt `ipo-analyser collect --json` executable every two hours.
-
-Push this directory to a GitHub or GitLab repository. For a new GitHub repository:
-
-```bash
-git init
-git add .
-git commit -m "Deploy IPO Analyser"
-gh repo create ipo-analyser --private --source=. --push
-```
-
-In Render, choose **New → Blueprint**, connect the repository, and deploy the detected
-`render.yaml`. The first deploy collects an initial snapshot; subsequent data refreshes use the
-schedule `30 */2 * * *`. Render schedules are UTC, so this runs on exact even hours in IST: 00:00,
-02:00, 04:00, and so on.
-
-The Blueprint deliberately uses a durable `basic-256mb` PostgreSQL instance. For a temporary trial,
-change its plan to `free`; free Render Postgres databases expire after 30 days. The web service uses
-the free plan and can cold-start after inactivity. The cron service uses Render's smallest supported
-paid cron plan.
-
-After deployment, verify:
-
-```text
-https://<your-service>.onrender.com/health
-https://<your-service>.onrender.com/
-```
-
-The cron job can also be triggered manually from its **Runs** page to verify collection immediately.
-
-### Railway
-
-The production Railway project uses native Railpack/UV builds with three services:
-
-- `web`, which serves the dashboard and checks `/health`;
-- `collector`, which runs `ipo-analyser collect --json` on `30 */2 * * *` (UTC); and
-- managed PostgreSQL, shared by both application services through `IPO_DATABASE_URL`.
-
-Railway cron schedules use UTC. Because IST is UTC+05:30, `30 */2 * * *` runs on exact even hours
-in IST: 00:00, 02:00, 04:00, and so on. The collector is a finite command and exits after every run.
-
-Both application services deploy the `main` branch from GitHub. `railway.toml` selects Railpack;
-the web entrypoint is auto-detected from the root `main.py`, while the collector command and cron
-schedule are configured on its Railway service. The optional Dockerfile lives under `deploy/` so
-Railway does not auto-detect it instead of the native build.
-
-### Cloud Run
-
-Build with `docker build -f deploy/Dockerfile .` and pair Cloud Run with Cloud Scheduler and Cloud
-SQL. Set `IPO_DATABASE_URL` to the managed PostgreSQL connection and schedule
-`ipo-analyser collect --json` every two hours.
+Because observations are unique by IPO, source, and source timestamp, replaying published history
+does not duplicate those points. Fresh current-page and subscription snapshots receive collection
+timestamps and are retained so their progression can be analysed later.
 
 ## Project layout
 
@@ -202,11 +190,13 @@ SQL. Set `IPO_DATABASE_URL` to the managed PostgreSQL connection and schedule
 src/ipo_analyser/
 ├── sources/       # Replaceable external adapters and parsers
 ├── services/      # Collection, consensus, trends, and score
-├── templates/     # Server-rendered dashboard
-├── static/        # Self-contained CSS
+├── templates/     # Dashboard templates, shared by the server and the static export
+├── static/        # CSS, plus app.js for filtering and sorting on the static site
 ├── models.py      # Historical SQLAlchemy schema
+├── rendering.py   # Template filters and dashboard filtering/sorting
 ├── main.py        # FastAPI HTML and JSON routes
-└── cli.py         # Collection and server commands
+├── export.py      # Static site export and history dump/restore
+└── cli.py         # Collection, export, and server commands
 ```
 
 The long-term Investment Score described in the original idea is intentionally not faked in this

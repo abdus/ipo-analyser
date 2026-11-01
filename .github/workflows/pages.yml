@@ -1,0 +1,90 @@
+name: Refresh and publish
+
+on:
+  schedule:
+    # UTC; runs on the even hour in IST (UTC+05:30).
+    - cron: "30 */2 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write # push the refreshed history to the data branch
+  pages: write
+  id-token: write
+
+# One run at a time, so two runs never race to push history.
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      IPO_DATABASE_URL: sqlite:///${{ github.workspace }}/ipo_analyser.db
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: astral-sh/setup-uv@v10
+        with:
+          python-version: "3.12"
+
+      - run: uv sync --frozen --no-dev
+
+      - name: Restore history from the data branch
+        run: |
+          if git fetch --depth=1 origin data; then
+            git worktree add --detach history FETCH_HEAD
+            uv run ipo-analyser restore-history history/history.sql
+          else
+            echo "::warning::No data branch yet; starting from an empty database."
+            git worktree add --orphan -b data history
+          fi
+
+      - name: Collect
+        run: |
+          if ! uv run ipo-analyser collect --json > collect.json; then
+            echo '{"errors": ["Collector: exited with an error"]}' > collect.json
+          fi
+          cat collect.json
+          python3 - <<'PY'
+          import json, os
+          report = json.load(open("collect.json"))
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:
+              summary.write("## Collection\n\n```json\n" + json.dumps(report, indent=2) + "\n```\n")
+          for error in report.get("errors", []):
+              print(f"::warning title=Source failed::{error}")
+          PY
+
+      - name: Export static site
+        run: uv run ipo-analyser export site --report collect.json
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site
+
+      - name: Save history to the data branch
+        working-directory: history
+        run: |
+          uv run --project "$GITHUB_WORKSPACE" ipo-analyser dump-history history.sql
+          git add history.sql
+          if git diff --cached --quiet; then
+            echo "History unchanged."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "Update history $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push origin HEAD:data
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

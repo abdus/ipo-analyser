@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from ipo_analyser.models import IPO, GMPObservation, MarketObservation, SubscriptionObservation
 
 TREND_WINDOW_DAYS = 7
+STALE_AFTER_DAYS = 30
 SUBSCRIPTION_SOURCE_PRIORITY = {"iporise": 2, "ipogram": 1}
 IST = ZoneInfo("Asia/Kolkata")
 
@@ -155,7 +156,7 @@ def build_snapshot(session: Session, ipo: IPO, market: dict | None = None) -> di
         "slug": ipo.slug,
         "name": ipo.name,
         "segment": ipo.segment,
-        "status": ipo.status,
+        "status": effective_status(ipo),
         "price_lower": _float_or_none(ipo.price_lower),
         "price_upper": price,
         "lot_size": ipo.lot_size,
@@ -192,6 +193,32 @@ def build_snapshot(session: Session, ipo: IPO, market: dict | None = None) -> di
         "market": market,
         "score": score,
     }
+
+
+def effective_status(ipo: IPO, today: date | None = None) -> str:
+    """Advance a stored open/upcoming status that the issue dates show has gone stale.
+
+    Sources only report IPOs they still list, so an IPO that drops off every source keeps its
+    last status in the database. Dates are trusted to move a status forward, never backward.
+    """
+    status = ipo.status
+    if status not in {"open", "upcoming", "unknown"}:
+        return status
+    today = today or datetime.now(IST).date()
+    if ipo.listing_date and ipo.listing_date <= today:
+        return "listed"
+    if ipo.close_date and ipo.close_date < today:
+        return "closed"
+    if status == "upcoming" and ipo.open_date and ipo.open_date <= today:
+        return "open"
+    if (
+        status != "unknown"
+        and not (ipo.open_date or ipo.close_date or ipo.listing_date)
+        and ipo.updated_at
+        and _as_aware(ipo.updated_at) < datetime.now(UTC) - timedelta(days=STALE_AFTER_DAYS)
+    ):
+        return "unknown"
+    return status
 
 
 def _gmp_consensus(rows: list[GMPObservation]) -> dict:
@@ -490,9 +517,7 @@ def _subscription_line_chart(history: list[dict]) -> dict:
                 continue
             observed_at = datetime.fromisoformat(point["observed_at"])
             ratio = (
-                (observed_at - window_start).total_seconds() / span_seconds
-                if span_seconds
-                else 0.5
+                (observed_at - window_start).total_seconds() / span_seconds if span_seconds else 0.5
             )
             x = left + ratio * (right - left)
             y = bottom - value / chart_max * (bottom - top)

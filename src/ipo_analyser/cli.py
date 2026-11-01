@@ -1,5 +1,7 @@
 import asyncio
 import json
+from pathlib import Path
+from typing import Annotated
 
 import typer
 
@@ -42,6 +44,51 @@ def collect(
     )
     for error in report.errors:
         typer.echo(f"Warning: {error}", err=True)
+
+
+@app.command()
+def export(
+    out_dir: Annotated[
+        Path, typer.Argument(help="Directory to write; replaced if present.")
+    ] = Path("site"),
+    report: Annotated[
+        Path | None,
+        typer.Option(help="JSON written by `collect --json`, to record which sources failed."),
+    ] = None,
+) -> None:
+    """Render the dashboard and JSON API as a static site."""
+    from ipo_analyser.export import export_site
+
+    create_db()
+    collect_report = None
+    if report and report.exists() and report.read_text().strip():
+        collect_report = json.loads(report.read_text())
+    with SessionLocal() as session:
+        status = export_site(session, out_dir, collect_report)
+    typer.echo(f"Exported {status['ipos']} IPOs to {out_dir}.")
+
+
+@app.command()
+def dump_history(
+    out_file: Annotated[Path, typer.Argument(help="SQL file to write.")],
+) -> None:
+    """Dump the SQLite database to a text SQL file for storage between runs."""
+    from ipo_analyser.export import dump_history as dump
+
+    create_db()
+    dump(get_settings().database_url, out_file)
+    typer.echo(f"Wrote {out_file}.")
+
+
+@app.command()
+def restore_history(
+    dump_file: Annotated[Path, typer.Argument(help="SQL file written by dump-history.")],
+) -> None:
+    """Replace the SQLite database with a dump written by dump-history."""
+    from ipo_analyser.export import restore_history as restore
+
+    restore(get_settings().database_url, dump_file)
+    typer.echo(f"Restored {dump_file}.")
 
 
 @app.command()
