@@ -4,6 +4,7 @@ Every link is relative, so the output works from any base path (for example GitH
 project sites at ``/<repo>/``) and from ``file://``.
 """
 
+import hashlib
 import json
 import re
 import shutil
@@ -36,6 +37,8 @@ def export_site(session: Session, out_dir: Path, collect_report: dict | None = N
 
     common = {
         "static_site": True,
+        # Pages caches assets for ten minutes; a content hash makes each deploy fetch fresh ones.
+        "asset_query": f"?v={_asset_version(out_dir / 'static')}",
         "generated_label": generated_at.astimezone(IST).strftime("%d %b %Y, %H:%M IST"),
         "failed_sources": failed_sources,
     }
@@ -65,6 +68,15 @@ def export_site(session: Session, out_dir: Path, collect_report: dict | None = N
     }
     _write_json(out_dir / "api" / "status.json", status)
     return status
+
+
+def _asset_version(static_dir: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(static_dir.rglob("*")):
+        if path.is_file():
+            digest.update(path.relative_to(static_dir).as_posix().encode())
+            digest.update(path.read_bytes())
+    return digest.hexdigest()[:10]
 
 
 def _write_json(path: Path, payload: dict) -> None:

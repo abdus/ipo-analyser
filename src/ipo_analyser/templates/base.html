@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light dark">
   <title>{% block title %}IPO Analyser{% endblock %}</title>
-  <link rel="stylesheet" href="{{ root }}static/app.css">
+  <link rel="stylesheet" href="{{ root }}static/app.css{{ asset_query }}">
   {# Apply a saved theme before first paint so there is no flash. #}
   <script>try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
@@ -61,7 +61,7 @@
     {% if failed_sources %}Unavailable in the latest run: {{ failed_sources|join(', ') }}; their earlier observations are still used.{% endif %}</p>
     {% endif %}
   </footer>
-  <script src="{{ root }}static/theme.js" defer></script>
-  {% if static_site %}<script src="{{ root }}static/app.js" defer></script>{% endif %}
+  <script src="{{ root }}static/theme.js{{ asset_query }}" defer></script>
+  {% if static_site %}<script src="{{ root }}static/app.js{{ asset_query }}" defer></script>{% endif %}
 </body>
 </html>

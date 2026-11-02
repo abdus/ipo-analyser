@@ -121,6 +121,7 @@ templates.env.globals.update(
     root="/",
     ipo_url=lambda slug: f"/ipo/{slug}",
     static_site=False,
+    asset_query="",
     status_filters=STATUS_FILTERS,
 )
 

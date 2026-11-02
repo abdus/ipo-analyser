@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
@@ -62,12 +63,12 @@ def test_export_writes_relative_static_site(tmp_path):
     site = tmp_path / "site"
     assert status["failed_sources"] == ["IPOGram"]
     index = (site / "index.html").read_text()
-    assert 'href="./static/app.css"' in index
+    assert re.search(r'href="\./static/app\.css\?v=[0-9a-f]{10}"', index)
     assert 'href="./ipo/shiprocket/"' in index
     assert "Unavailable in the latest run: IPOGram" in index
     assert 'href="/' not in index
     detail = (site / "ipo" / "shiprocket" / "index.html").read_text()
-    assert 'href="../../static/app.css"' in detail
+    assert 'href="../../static/app.css?v=' in detail
     assert 'href="/' not in detail
     # One day of GMP is drawn as a labelled dot, not a line.
     assert "chart-sparse" in detail
@@ -76,8 +77,8 @@ def test_export_writes_relative_static_site(tmp_path):
     assert "data-no-match hidden" in index
     assert "JSON data" in index
     assert (site / "static" / "app.js").exists()
-    assert 'src="./static/theme.js"' in index
-    assert 'src="../../static/theme.js"' in detail
+    assert 'src="./static/theme.js?v=' in index
+    assert 'src="../../static/theme.js?v=' in detail
     assert "data-theme-switch hidden" in index
     assert (site / "static" / "theme.js").exists()
     payload = json.loads((site / "api" / "ipos" / "shiprocket.json").read_text())
