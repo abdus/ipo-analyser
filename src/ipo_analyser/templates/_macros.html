@@ -1,0 +1,70 @@
+{# The score out of 100 as a gradient ring, coloured by its signal. #}
+{% macro ring(score, signal, size='m') -%}
+<span class="ring ring-{{ size }}">
+  <svg viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+    <circle class="ring-track" cx="50" cy="50" r="42"/>
+    <circle class="ring-value" cx="50" cy="50" r="42" stroke="url(#ring-{{ signal|tone }})"
+      stroke-dasharray="{{ '%.1f'|format(263.9 * score / 100) }} 264"/>
+  </svg>
+  <span class="ring-number">{{ score }}</span>
+</span>
+{%- endmacro %}
+
+{# Where a point sits in the 730 × 250 chart frame, as percentages, plus which way its label leans. #}
+{% macro place(point) -%}
+style="left: {{ '%.2f'|format(point.x / 7.3) }}%; top: {{ '%.2f'|format(point.y / 2.5) }}%"
+{%- endmacro %}
+{% macro lean(point) -%}
+{{ 'lean-end' if point.x > 600 else 'lean-start' if point.x < 130 else '' }}
+{%- endmacro %}
+
+{#
+  A line chart drawn in the 730 × 250 frame the analysis service lays coordinates out in.
+  ``hero`` is the series drawn as a gradient area; ``others`` are thin neutral lines.
+  ``fmt`` formats values ('money' or 'multiple'). Points are buttons, so their values show on
+  hover, keyboard focus and tap. With fewer than three points the series are shown as labelled
+  dots rather than a line.
+#}
+{% macro chart(hero, others, y_ticks, x_labels, tone, fmt, y_format, label) -%}
+{% set sparse = hero.coordinates|length < 3 %}
+{% set step = ((y_ticks[0].value - y_ticks[1].value)|abs) if y_ticks|length > 1 else 1 %}
+<figure class="chart {{ 'chart-sparse' if sparse else '' }}" aria-label="{{ label }}">
+  <div class="chart-plot">
+    <svg viewBox="0 0 730 250" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      {% for tick in y_ticks %}
+      <line class="chart-grid" x1="0" x2="730" y1="{{ '%.1f'|format(tick.y) }}" y2="{{ '%.1f'|format(tick.y) }}"/>
+      {% endfor %}
+      {% if not sparse %}
+      {% for series in others if series.coordinates|length > 1 %}
+      <path class="chart-line-other other-{{ series.key }}" d="{{ series.coordinates|smooth_path }}"/>
+      {% endfor %}
+      <path class="chart-area" fill="url(#fill-{{ tone }})" d="{{ hero.coordinates|area_path }}"/>
+      <path class="chart-line" stroke="url(#line-{{ tone }})" d="{{ hero.coordinates|smooth_path }}"/>
+      {% endif %}
+    </svg>
+    {% for tick in y_ticks %}
+    <span class="chart-y" style="top: {{ '%.2f'|format(tick.y / 2.5) }}%">{{ y_format(tick.value, step) }}</span>
+    {% endfor %}
+    {% for series in others %}
+    {% for point in series.coordinates %}
+    <button type="button" class="chart-point point-other other-{{ series.key }} {{ lean(point) }}" {{ place(point) }}>
+      <span class="chart-tip">{{ series.label }} · {{ point.date|day if point.date else point.label }}<b>{{ point.gmp|money if fmt == 'money' else point.value|multiple }}</b></span>
+    </button>
+    {% endfor %}
+    {% endfor %}
+    {% for point in hero.coordinates %}
+    <button type="button" class="chart-point point-hero tone-{{ tone }} {{ lean(point) }}" {{ place(point) }}>
+      <span class="chart-tip">{{ hero.label }} · {{ point.date|day if point.date else point.label }}<b>{{ point.gmp|money if fmt == 'money' else point.value|multiple }}</b></span>
+    </button>
+    {% if sparse %}
+    <span class="chart-value {{ lean(point) }}" {{ place(point) }} aria-hidden="true">{{ point.gmp|money if fmt == 'money' else point.value|multiple }}</span>
+    {% endif %}
+    {% endfor %}
+  </div>
+  <div class="chart-x">
+    {% for item in x_labels %}
+    <span class="{{ 'x-edge' if loop.first or loop.last else 'x-mid' }}" style="left: {{ '%.2f'|format(item.x / 7.3) }}%">{{ item.label|day if fmt == 'money' else item.label }}</span>
+    {% endfor %}
+  </div>
+</figure>
+{%- endmacro %}

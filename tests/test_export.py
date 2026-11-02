@@ -69,6 +69,12 @@ def test_export_writes_relative_static_site(tmp_path):
     detail = (site / "ipo" / "shiprocket" / "index.html").read_text()
     assert 'href="../../static/app.css"' in detail
     assert 'href="/' not in detail
+    # One day of GMP is drawn as a labelled dot, not a line.
+    assert "chart-sparse" in detail
+    assert '<span class="chart-value' in detail
+    assert 'class="chart-area"' not in detail
+    assert "data-no-match hidden" in index
+    assert "JSON data" in index
     assert (site / "static" / "app.js").exists()
     payload = json.loads((site / "api" / "ipos" / "shiprocket.json").read_text())
     assert payload["data"]["gmp"] == 12

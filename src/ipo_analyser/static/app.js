@@ -7,11 +7,12 @@
   const tbody = table.tBodies[0];
   const rows = Array.from(tbody.rows).sort((a, b) => a.dataset.order - b.dataset.order);
   const filterLinks = Array.from(document.querySelectorAll(".filters a[data-status]"));
-  const sortLinks = Array.from(table.querySelectorAll("thead a[data-sort]"));
+  // Sort links live in the table header (wide screens) and above the cards (phones).
+  const sortLinks = Array.from(document.querySelectorAll("a[data-sort]"));
+  const empty = document.querySelector("[data-no-match]");
   const form = document.querySelector(".table-search");
   const search = form.querySelector('input[name="q"]');
   const statuses = new Set(filterLinks.map((link) => link.dataset.status));
-  const columns = table.tHead.rows[0].cells.length;
 
   const number = (key) => (row) => (row.dataset[key] === "" ? null : Number(row.dataset[key]));
   const text = (key) => (row) => row.dataset[key] || null;
@@ -59,8 +60,6 @@
     return `?${params}`;
   };
 
-  let empty = null;
-
   const render = (state) => {
     const needle = state.q.trim().toLowerCase();
     const visible = rows.filter(
@@ -80,15 +79,8 @@
     });
     tbody.append(...populated, ...missing, ...rows.filter((row) => !shown.has(row)));
 
-    if (!visible.length) {
-      if (!empty) {
-        empty = document.createElement("tr");
-        empty.innerHTML = `<td colspan="${columns}" class="sparkline-empty">No IPOs match.</td>`;
-      }
-      tbody.prepend(empty);
-    } else if (empty) {
-      empty.remove();
-    }
+    table.hidden = !visible.length;
+    if (empty) empty.hidden = Boolean(visible.length);
 
     filterLinks.forEach((link) => {
       link.classList.toggle("active", link.dataset.status === state.status);
@@ -117,7 +109,7 @@
   };
 
   document.addEventListener("click", (event) => {
-    const link = event.target.closest(".filters a[data-status], thead a[data-sort]");
+    const link = event.target.closest(".filters a[data-status], a[data-sort]");
     if (!link || event.metaKey || event.ctrlKey || event.shiftKey) return;
     event.preventDefault();
     go(readState(new URL(link.href).search));

@@ -1,131 +1,142 @@
 {% extends "base.html" %}
+{% from "_macros.html" import ring %}
 {% block title %}IPO Analyser — Current IPO signals{% endblock %}
 {% block content %}
-<section class="home-market-strip sentiment-{{ market.sentiment }}" aria-label="Market context">
-  <div class="market-strip-summary">
-    <span>Market context</span>
-    <strong>{{ market.sentiment }}</strong>
-    <small>Avg today {{ market.day_average|percent(true) }} · 7D {{ market.week_average|percent(true) }}</small>
-  </div>
-  {% if market.indices %}
+{% macro sign(value) -%}{{ 'up' if (value or 0) > 0 else 'down' if (value or 0) < 0 else 'flat' }}{%- endmacro %}
+
+<section class="intro">
+  <h1>IPO signals</h1>
+  <p class="summary" aria-label="IPO pipeline summary">
+    {{ stats.open }} open, {{ stats.upcoming }} upcoming.
+    {% if stats.average_gain is not none %}Average implied gain <span class="num">{{ stats.average_gain|percent(true) }}</span>.{% endif %}
+    {% if stats.top %}Top actionable signal: <a href="{{ ipo_url(stats.top.slug) }}">{{ stats.top.name }}</a>, <span class="num">{{ stats.top.score.total }}</span>.{% endif %}
+  </p>
+  <dl class="market" aria-label="Market context">
+    <div><dt>Market</dt><dd>{{ market.sentiment|capitalize }}, today <span class="num">{{ market.day_average|percent(true) }}</span>, 7 days <span class="num">{{ market.week_average|percent(true) }}</span></dd></div>
     {% for index in market.indices %}
-    <div class="market-strip-index">
-      <div><span>{{ index.name }}</span><strong>{{ "{:,.2f}".format(index.value) }}</strong></div>
-      <div><span>Today</span><em class="number-{{ 'positive' if (index.day_change or 0) >= 0 else 'negative' }}">{{ index.day_change|percent(true) }}</em></div>
-      <div><span>7 days</span><em class="number-{{ 'positive' if (index.seven_day_change or 0) >= 0 else 'negative' }}">{{ index.seven_day_change|percent(true) }}</em></div>
-    </div>
+    <div><dt>{{ index.name|title }}</dt><dd><span class="num">{{ "{:,.2f}".format(index.value) }}</span> <span class="num change-{{ sign(index.day_change) }}">{{ index.day_change|percent(true) }}</span> today, <span class="num change-{{ sign(index.seven_day_change) }}">{{ index.seven_day_change|percent(true) }}</span> 7 days</dd></div>
+    {% else %}
+    <div><dt>Indices</dt><dd>Run the collector to load market data.</dd></div>
     {% endfor %}
-  {% else %}
-  <div class="market-strip-empty">Run the collector to load market data.</div>
-  {% endif %}
+  </dl>
 </section>
 
-<section class="overview-strip" aria-label="IPO pipeline summary">
-  <div><span>Open now</span><strong>{{ stats.open }}</strong></div>
-  <div><span>Upcoming</span><strong>{{ stats.upcoming }}</strong></div>
-  <div><span>Average implied gain</span><strong>{{ stats.average_gain|percent(true) }}</strong></div>
-  <div class="top-signal"><span>Top actionable signal</span><strong>{% if stats.top %}{{ stats.top.name }} · {{ stats.top.score.total }}{% else %}—{% endif %}</strong></div>
-</section>
+{% macro sort_link(key, label) -%}
+  {% set next_direction = 'asc' if selected_sort == key and direction == 'desc' else 'desc' %}
+  <a data-sort="{{ key }}" data-label="{{ label }}" href="{{ root }}?status={{ selected_status }}&sort={{ key }}&direction={{ next_direction }}{% if query %}&q={{ query|urlencode }}{% endif %}">{{ label }}{% if selected_sort == key %}<span>{{ '↓' if direction == 'desc' else '↑' }}</span>{% endif %}</a>
+{%- endmacro %}
 
-<section class="table-controls">
+<section class="controls" aria-label="Filter and sort">
   <nav class="filters" aria-label="IPO status filters">
     {% for value, label in status_filters %}
     <a class="{{ 'active' if selected_status == value else '' }}" data-status="{{ value }}" href="{{ root }}?status={{ value }}&sort={{ selected_sort }}&direction={{ direction }}">{{ label }}</a>
     {% endfor %}
   </nav>
-  <form class="table-search" method="get" action="{{ root }}">
+  <form class="table-search" method="get" action="{{ root }}" role="search">
     <input type="hidden" name="status" value="{{ selected_status }}">
     <input type="hidden" name="sort" value="{{ selected_sort }}">
     <input type="hidden" name="direction" value="{{ direction }}">
-    <input type="search" name="q" value="{{ query }}" placeholder="Search IPO…" aria-label="Search IPO">
+    <input type="search" name="q" value="{{ query }}" placeholder="Search IPOs" aria-label="Search IPOs">
     <button type="submit">Search</button>
   </form>
+  <nav class="sort-links" aria-label="Sort IPOs">
+    <span>Sort by</span>
+    {{ sort_link('score', 'Signal') }}
+    {{ sort_link('gain', 'Implied gain') }}
+    {{ sort_link('open_date', 'Dates') }}
+    {{ sort_link('gmp', 'GMP') }}
+    {{ sort_link('qib', 'QIB demand') }}
+    {{ sort_link('name', 'Name') }}
+  </nav>
 </section>
 
 {% if ipos %}
-{% macro sort_header(key, label) -%}
-  {% set next_direction = 'asc' if selected_sort == key and direction == 'desc' else 'desc' %}
-  <a data-sort="{{ key }}" data-label="{{ label }}" href="{{ root }}?status={{ selected_status }}&sort={{ key }}&direction={{ next_direction }}{% if query %}&q={{ query|urlencode }}{% endif %}">
-    {{ label }}{% if selected_sort == key %}<span>{{ '↓' if direction == 'desc' else '↑' }}</span>{% endif %}
-  </a>
-{%- endmacro %}
-<section class="analysis-table-wrap">
-  <table class="analysis-table" data-ipo-table>
-    <thead>
-      <tr>
-        <th>{{ sort_header('name', 'IPO') }}</th>
-        <th>{{ sort_header('score', 'Signal') }}</th>
-        <th>{{ sort_header('gmp', 'Price & GMP') }}</th>
-        <th>7D momentum</th>
-        <th>{{ sort_header('gain', 'Implied listing') }}</th>
-        <th>{{ sort_header('qib', 'Investor demand') }}</th>
-        <th>{{ sort_header('open_date', 'Timeline') }}</th>
-        <th><span class="sr-only">Open</span></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for ipo in ipos %}
-      <tr class="signal-row-{{ ipo.score.signal }}" data-order="{{ ipo.order }}" data-status="{{ ipo.status }}" data-name="{{ ipo.name }}" data-score="{{ ipo.score.total }}" data-gmp="{{ ipo.gmp if ipo.gmp is not none else '' }}" data-gain="{{ ipo.implied_gain_pct if ipo.implied_gain_pct is not none else '' }}" data-qib="{{ ipo.subscription.qib if ipo.subscription.qib is not none else '' }}" data-open-date="{{ ipo.open_date or '' }}">
-        <td class="ipo-cell">
-          <a href="{{ ipo_url(ipo.slug) }}">{{ ipo.name }}</a>
-          <div><span class="status status-{{ ipo.status }}">{{ ipo.status }}</span><span class="segment">{{ ipo.segment }}</span></div>
-        </td>
-        <td class="signal-cell">
-          <div class="signal-content">
-            <div class="table-score signal-{{ ipo.score.signal }}">{{ ipo.score.total }}</div>
-            <div>
-              <strong>{{ ipo.score.signal }}</strong>
-              {% if ipo.status in ['closed', 'listed'] %}
-              <small>Review only · no longer actionable</small>
-              {% else %}
-              <small>{{ ipo.score.confidence }}% confidence{% if ipo.score.provisional %} · provisional{% endif %}</small>
-              {% endif %}
-            </div>
-          </div>
-        </td>
-        <td class="price-gmp-cell">
-          <div><span>Price</span><strong>{{ ipo.price_upper|money }}</strong></div>
-          <div><span>GMP</span><strong>{{ ipo.gmp|money }}</strong></div>
-          <small>{{ ipo.gmp_sources|length }} source{{ '' if ipo.gmp_sources|length == 1 else 's' }} · {{ ipo.gmp_agreement }}</small>
-        </td>
-        <td class="momentum-cell">
-          {% if ipo.history %}
-          <svg class="table-sparkline trend-{{ ipo.trend }}" viewBox="54 15 652 208" preserveAspectRatio="none" aria-hidden="true">
-            <polyline points="{{ ipo.history_chart.points }}"/>
-          </svg>
-          {% else %}<div class="sparkline-empty">No history</div>{% endif %}
-          <div><span class="trend trend-{{ ipo.trend }}">{{ '↗' if ipo.trend == 'rising' else '↘' if ipo.trend == 'falling' else '→' }} {{ ipo.trend }}</span><small>3D {{ ipo.delta_3d|money }} · 7D {{ ipo.delta_7d|money }}</small></div>
-        </td>
-        <td class="implied-cell">
-          <strong>{{ ipo.implied_listing_price|money }}</strong>
-          <span class="number-{{ 'positive' if (ipo.implied_gain_pct or 0) >= 0 else 'negative' }}">{{ ipo.implied_gain_pct|percent(true) }}</span>
-        </td>
-        <td class="demand-cell">
-          <div class="demand-content">
-          {% if ipo.subscription_state == 'available' %}
-          <div><span>QIB</span><strong>{{ ipo.subscription.qib|multiple }}</strong></div>
-          <div><span>NII</span><strong>{{ ipo.subscription.nii|multiple }}</strong></div>
-          <div><span>Retail</span><strong>{{ ipo.subscription.retail|multiple }}</strong></div>
-          <small>Total {{ ipo.subscription.total|multiple }} · {{ ipo.subscription_coverage_days }}d history</small>
-          {% else %}<span class="data-state">{{ 'Pre-open' if ipo.subscription_state == 'not_open' else 'Pending' }}</span>{% endif %}
-          </div>
-        </td>
-        <td class="timeline-cell">
-          <div><span>Open</span><strong>{{ ipo.open_date or '—' }}</strong></div>
-          <div><span>List</span><strong>{{ ipo.listing_date or '—' }}</strong></div>
-        </td>
-        <td class="row-action"><a href="{{ ipo_url(ipo.slug) }}" aria-label="Inspect {{ ipo.name }}">→</a></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</section>
+<table class="ipo-table" data-ipo-table>
+  <thead>
+    <tr>
+      <th scope="col">{{ sort_link('name', 'IPO') }}</th>
+      <th scope="col">{{ sort_link('score', 'Signal') }}</th>
+      <th scope="col" class="end">{{ sort_link('gain', 'Implied gain') }}</th>
+      <th scope="col">{{ sort_link('open_date', 'Dates') }}</th>
+      <th scope="col" class="end">{{ sort_link('gmp', 'GMP') }}</th>
+      <th scope="col">{{ sort_link('qib', 'Demand') }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for ipo in ipos %}
+    {% set live = ipo.status in ['open', 'upcoming'] %}
+    <tr class="{{ '' if live else 'past' }}" data-order="{{ ipo.order }}" data-status="{{ ipo.status }}" data-name="{{ ipo.name }}" data-score="{{ ipo.score.total }}" data-gmp="{{ ipo.gmp if ipo.gmp is not none else '' }}" data-gain="{{ ipo.implied_gain_pct if ipo.implied_gain_pct is not none else '' }}" data-qib="{{ ipo.subscription.qib if ipo.subscription.qib is not none else '' }}" data-open-date="{{ ipo.open_date or '' }}">
+      <td class="c-name">
+        <a class="row-link" href="{{ ipo_url(ipo.slug) }}">{{ ipo.name }}</a>
+        <span class="meta"><span class="status status-{{ ipo.status }}">{{ ipo.status|capitalize }}</span> · {{ ipo.segment|segment_label }}</span>
+      </td>
+      <td class="c-signal"><span class="signal">
+        {{ ring(ipo.score.total, ipo.score.signal, 's') }}
+        <span class="signal-text">
+          <span class="signal-word tone-{{ ipo.score.signal|tone }}">{{ ipo.score.signal|capitalize }}</span>
+          {% if live %}
+          <span class="meta">{{ ipo.score.confidence }}% confidence{% if ipo.score.provisional %} · provisional{% endif %}</span>
+          {% else %}
+          <span class="meta">Review only</span>
+          {% endif %}
+        </span>
+      </span></td>
+      <td class="c-gain end">
+        <span class="gain num change-{{ sign(ipo.implied_gain_pct) }}">{{ ipo.implied_gain_pct|percent(true) }}</span>
+        <span class="meta">Lists at <span class="num">{{ ipo.implied_listing_price|money }}</span></span>
+      </td>
+      <td class="c-dates">
+        {% if ipo.status == 'upcoming' %}
+        <span class="primary">Opens {{ ipo.open_date|day }}</span>
+        {% elif ipo.status == 'open' %}
+        <span class="primary">Bids close {{ ipo.close_date|day }}</span>
+        {% elif ipo.status == 'listed' %}
+        <span class="primary">Listed {{ ipo.listing_date|day }}</span>
+        {% else %}
+        <span class="primary">Closed {{ ipo.close_date|day }}</span>
+        {% endif %}
+        <span class="meta">Open {{ ipo.open_date|day }} · List {{ ipo.listing_date|day }}</span>
+      </td>
+      <td class="c-gmp end">
+        <span class="gmp-line">
+          {% if ipo.history_chart.coordinates and ipo.history_chart.coordinates|length > 2 %}
+          <svg class="spark" viewBox="54 15 652 208" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path stroke="url(#line-{{ ipo.score.signal|tone }})" d="{{ ipo.history_chart.coordinates|smooth_path }}"/></svg>
+          {% endif %}
+          <span><span class="meta card-only">GMP </span><span class="num">{{ ipo.gmp|money }}</span></span>
+        </span>
+        <span class="meta">Price <span class="num">{{ ipo.price_upper|money }}</span> · <span title="GMP agreement: {{ ipo.gmp_agreement }}">{{ ipo.gmp_sources|length }} source{{ '' if ipo.gmp_sources|length == 1 else 's' }}</span></span>
+        <span class="meta">{{ ipo.trend|capitalize }} · 3D <span class="num">{{ ipo.delta_3d|money }}</span> · 7D <span class="num">{{ ipo.delta_7d|money }}</span></span>
+      </td>
+      <td class="c-demand">
+        {% if ipo.subscription_state == 'available' %}
+        <span class="demand">
+          <span><span class="meta">QIB</span><span class="num">{{ ipo.subscription.qib|multiple }}</span></span>
+          <span><span class="meta">NII</span><span class="num">{{ ipo.subscription.nii|multiple }}</span></span>
+          <span><span class="meta">Retail</span><span class="num">{{ ipo.subscription.retail|multiple }}</span></span>
+        </span>
+        <span class="meta">Total <span class="num">{{ ipo.subscription.total|multiple }}</span> · {{ ipo.subscription_coverage_days }}d history</span>
+        {% else %}
+        <span class="meta">{{ 'Opens for bids soon' if ipo.subscription_state == 'not_open' else 'Demand data pending' }}</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="empty" data-no-match hidden>
+  <p class="empty-title">No IPOs match.</p>
+  <p><a href="{{ root }}">Show all IPOs</a></p>
+</div>
+{% elif query or selected_status != 'all' %}
+<div class="empty">
+  <p class="empty-title">No IPOs match.</p>
+  <p><a href="{{ root }}">Show all IPOs</a></p>
+</div>
 {% else %}
-<section class="empty-state">
-  <div class="empty-icon">↻</div>
-  <h2>No IPO observations yet</h2>
-  <p>Load the first live snapshot, then refresh this page:</p>
+<div class="empty">
+  <p class="empty-title">No IPO data yet</p>
+  <p>Load the first live snapshot, then refresh this page.</p>
   <code>uv run ipo-analyser collect</code>
-</section>
+</div>
 {% endif %}
 {% endblock %}

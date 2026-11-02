@@ -3,29 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark light">
+  <meta name="color-scheme" content="light dark">
   <title>{% block title %}IPO Analyser{% endblock %}</title>
   <link rel="stylesheet" href="{{ root }}static/app.css">
 </head>
 <body>
+  {# Shared gradients for score rings and chart fills; stop colours come from the stylesheet. #}
+  <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+    <defs>
+      {% for name in ['up', 'mid', 'down', 'ink'] %}
+      <linearGradient id="ring-{{ name }}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" class="stop-{{ name }}-a"/>
+        <stop offset="100%" class="stop-{{ name }}-b"/>
+      </linearGradient>
+      {# User-space units, so a perfectly flat line (a zero-height box) still gets its colour. #}
+      <linearGradient id="line-{{ name }}" gradientUnits="userSpaceOnUse" x1="54" y1="0" x2="706" y2="0">
+        <stop offset="0%" class="stop-{{ name }}-a"/>
+        <stop offset="100%" class="stop-{{ name }}-b"/>
+      </linearGradient>
+      <linearGradient id="fill-{{ name }}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" class="stop-{{ name }}-b fill-top"/>
+        <stop offset="100%" class="stop-{{ name }}-b fill-bottom"/>
+      </linearGradient>
+      {% endfor %}
+    </defs>
+  </svg>
   <header class="site-header">
-    <a class="brand" href="{{ root }}">
-      <span class="brand-mark">IA</span>
-      <span><strong>IPO Analyser</strong><small>Listing-gain research</small></span>
-    </a>
+    <a class="brand" href="{{ root }}">IPO Analyser</a>
     {% if static_site %}
-    <a class="api-link" href="{{ root }}api/ipos.json">JSON data</a>
+    <a class="quiet-link" href="{{ root }}api/ipos.json">JSON data</a>
     {% else %}
-    <a class="api-link" href="/docs">API docs</a>
+    <a class="quiet-link" href="/docs">API docs</a>
     {% endif %}
   </header>
-  <main class="page-shell">{% block content %}{% endblock %}</main>
-  <footer>
-    GMP is unofficial and unregulated. Signals are mechanical research aids, not investment advice
-    or a guarantee of listing performance.
+  <main class="page">{% block content %}{% endblock %}</main>
+  <footer class="site-footer">
+    <p>GMP is unofficial and unregulated. Signals are mechanical research aids, not investment advice
+    or a guarantee of listing performance.</p>
     {% if static_site %}
-    <br>Data refreshed {{ generated_label }}.
-    {% if failed_sources %}Unavailable in the latest run: {{ failed_sources|join(', ') }}; their earlier observations are still used.{% endif %}
+    <p>Data refreshed {{ generated_label }}.
+    {% if failed_sources %}Unavailable in the latest run: {{ failed_sources|join(', ') }}; their earlier observations are still used.{% endif %}</p>
     {% endif %}
   </footer>
   {% if static_site %}<script src="{{ root }}static/app.js" defer></script>{% endif %}
