@@ -6,6 +6,8 @@
   <meta name="color-scheme" content="light dark">
   <title>{% block title %}IPO Analyser{% endblock %}</title>
   <link rel="stylesheet" href="{{ root }}static/app.css">
+  {# Apply a saved theme before first paint so there is no flash. #}
+  <script>try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
 </head>
 <body>
   {# Shared gradients for score rings and chart fills; stop colours come from the stylesheet. #}
@@ -30,11 +32,25 @@
   </svg>
   <header class="site-header">
     <a class="brand" href="{{ root }}">IPO Analyser</a>
-    {% if static_site %}
-    <a class="quiet-link" href="{{ root }}api/ipos.json">JSON data</a>
-    {% else %}
-    <a class="quiet-link" href="/docs">API docs</a>
-    {% endif %}
+    <div class="header-tools">
+      {% if static_site %}
+      <a class="quiet-link" href="{{ root }}api/ipos.json">JSON data</a>
+      {% else %}
+      <a class="quiet-link" href="/docs">API docs</a>
+      {% endif %}
+      {# Hidden until theme.js runs; without JavaScript the page simply follows the system. #}
+      <div class="theme-switch" role="group" aria-label="Theme" data-theme-switch hidden>
+        <button type="button" data-theme-choice="system" aria-label="Match system" title="Match system">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path class="solid" d="M8 2a6 6 0 0 1 0 12z"/></svg>
+        </button>
+        <button type="button" data-theme-choice="light" aria-label="Light" title="Light">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1"/></svg>
+        </button>
+        <button type="button" data-theme-choice="dark" aria-label="Dark" title="Dark">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 9.6A5.8 5.8 0 0 1 6.4 2.5a5.8 5.8 0 1 0 7.1 7.1z"/></svg>
+        </button>
+      </div>
+    </div>
   </header>
   <main class="page">{% block content %}{% endblock %}</main>
   <footer class="site-footer">
@@ -45,6 +61,7 @@
     {% if failed_sources %}Unavailable in the latest run: {{ failed_sources|join(', ') }}; their earlier observations are still used.{% endif %}</p>
     {% endif %}
   </footer>
+  <script src="{{ root }}static/theme.js" defer></script>
   {% if static_site %}<script src="{{ root }}static/app.js" defer></script>{% endif %}
 </body>
 </html>

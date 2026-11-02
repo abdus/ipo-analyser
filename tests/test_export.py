@@ -76,6 +76,10 @@ def test_export_writes_relative_static_site(tmp_path):
     assert "data-no-match hidden" in index
     assert "JSON data" in index
     assert (site / "static" / "app.js").exists()
+    assert 'src="./static/theme.js"' in index
+    assert 'src="../../static/theme.js"' in detail
+    assert "data-theme-switch hidden" in index
+    assert (site / "static" / "theme.js").exists()
     payload = json.loads((site / "api" / "ipos" / "shiprocket.json").read_text())
     assert payload["data"]["gmp"] == 12
     assert json.loads((site / "api" / "ipos.json").read_text())["data"][0]["slug"] == "shiprocket"
