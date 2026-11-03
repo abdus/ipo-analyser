@@ -570,6 +570,28 @@ INSERT INTO "gmp_observations" VALUES(556,36,'ipocracker','2026-11-03 09:28:00.0
 INSERT INTO "gmp_observations" VALUES(557,39,'ipocracker','2026-11-03 05:30:00.000000',9,'https://ipocracker.com/ipo-gmp/bombay-coated-and-special-steels','2026-11-03 12:09:30.693938');
 INSERT INTO "gmp_observations" VALUES(558,41,'ipocracker','2026-11-03 06:30:00.000000',3,'https://ipocracker.com/ipo-gmp/carver-roboweld','2026-11-03 12:09:30.696368');
 INSERT INTO "gmp_observations" VALUES(559,42,'ipocracker','2026-11-03 10:57:00.000000',11,'https://ipocracker.com/ipo-gmp/mk-sons-fine-jewels','2026-11-03 12:09:30.697496');
+INSERT INTO "gmp_observations" VALUES(560,33,'iporise','2026-11-03 19:41:42.268511',15,'https://www.iporise.com/ipo/vedant-poly-fabs-ipo/gmp','2026-11-03 19:41:48.921824');
+INSERT INTO "gmp_observations" VALUES(561,34,'iporise','2026-11-03 19:41:42.268511',80,'https://www.iporise.com/ipo/maxwell-engineering-solutions-ipo/gmp','2026-11-03 19:41:48.923357');
+INSERT INTO "gmp_observations" VALUES(562,35,'iporise','2026-11-03 19:41:42.268511',0,'https://www.iporise.com/ipo/vectras-enprocon-ipo/gmp','2026-11-03 19:41:48.924283');
+INSERT INTO "gmp_observations" VALUES(563,36,'iporise','2026-11-03 19:41:42.268511',30,'https://www.iporise.com/ipo/hgs-india-ipo/gmp','2026-11-03 19:41:48.925140');
+INSERT INTO "gmp_observations" VALUES(564,37,'iporise','2026-11-03 19:41:42.268511',10,'https://www.iporise.com/ipo/johnsoncab-electricals-ipo/gmp','2026-11-03 19:41:48.925965');
+INSERT INTO "gmp_observations" VALUES(565,38,'iporise','2026-11-03 19:41:42.268511',0,'https://www.iporise.com/ipo/antala-industries-ipo/gmp','2026-11-03 19:41:48.927282');
+INSERT INTO "gmp_observations" VALUES(566,39,'iporise','2026-11-03 19:41:42.268511',8,'https://www.iporise.com/ipo/bombay-coated-special-steels-ipo/gmp','2026-11-03 19:41:48.928187');
+INSERT INTO "gmp_observations" VALUES(567,40,'iporise','2026-11-03 19:41:42.268511',1,'https://www.iporise.com/ipo/ajwa-projects-ipo/gmp','2026-11-03 19:41:48.929272');
+INSERT INTO "gmp_observations" VALUES(568,41,'iporise','2026-11-03 19:41:42.268511',5,'https://www.iporise.com/ipo/carver-roboweld-ipo/gmp','2026-11-03 19:41:48.930141');
+INSERT INTO "gmp_observations" VALUES(569,42,'iporise','2026-11-03 19:41:42.268511',6.5,'https://www.iporise.com/ipo/mksons-fine-jewels-ipo/gmp','2026-11-03 19:41:48.930970');
+INSERT INTO "gmp_observations" VALUES(570,43,'iporise','2026-11-03 19:41:42.268511',0,'https://www.iporise.com/ipo/wiscon-industries-ipo/gmp','2026-11-03 19:41:48.931790');
+INSERT INTO "gmp_observations" VALUES(571,44,'iporise','2026-11-03 19:41:42.268511',21,'https://www.iporise.com/ipo/sfc-environmental-technologies-ipo/gmp','2026-11-03 19:41:48.932576');
+INSERT INTO "gmp_observations" VALUES(572,45,'iporise','2026-11-03 19:41:42.268511',67,'https://www.iporise.com/ipo/bls-polymers-ipo/gmp','2026-11-03 19:41:48.933411');
+INSERT INTO "gmp_observations" VALUES(573,46,'iporise','2026-11-03 19:41:42.268511',57,'https://www.iporise.com/ipo/eaaa-india-alternatives-ipo/gmp','2026-11-03 19:41:48.934233');
+INSERT INTO "gmp_observations" VALUES(574,47,'iporise','2026-11-03 19:41:42.268511',0,'https://www.iporise.com/ipo/core4-engineers-ipo/gmp','2026-11-03 19:41:48.934999');
+INSERT INTO "gmp_observations" VALUES(575,48,'iporise','2026-11-03 19:41:42.268511',13,'https://www.iporise.com/ipo/paras-healthcare-ipo/gmp','2026-11-03 19:41:48.935790');
+INSERT INTO "gmp_observations" VALUES(576,49,'iporise','2026-11-03 19:41:42.268511',248,'https://www.iporise.com/ipo/jio-platforms-ipo/gmp','2026-11-03 19:41:48.936578');
+INSERT INTO "gmp_observations" VALUES(577,50,'iporise','2026-11-03 19:41:42.268511',441,'https://www.iporise.com/ipo/tonbo-imaging-india-ipo/gmp','2026-11-03 19:41:48.937439');
+INSERT INTO "gmp_observations" VALUES(578,51,'iporise','2026-11-03 19:41:42.268511',17,'https://www.iporise.com/ipo/sahajanand-medical-technologies-ipo/gmp','2026-11-03 19:41:48.938385');
+INSERT INTO "gmp_observations" VALUES(579,52,'iporise','2026-11-03 19:41:42.268511',7,'https://www.iporise.com/ipo/shellz-india-ipo/gmp','2026-11-03 19:41:48.939243');
+INSERT INTO "gmp_observations" VALUES(580,33,'ipocracker','2026-11-03 15:00:00.000000',11,'https://ipocracker.com/ipo-gmp/vedant-poly-fabs','2026-11-03 19:41:48.972043');
+INSERT INTO "gmp_observations" VALUES(581,39,'ipocracker','2026-11-03 19:27:00.000000',7,'https://ipocracker.com/ipo-gmp/bombay-coated-and-special-steels','2026-11-03 19:41:48.976498');
 CREATE TABLE ipos (
 	id INTEGER NOT NULL, 
 	slug VARCHAR(180) NOT NULL, 
@@ -618,26 +640,26 @@ INSERT INTO "ipos" VALUES(29,'propshop-events','Propshop Events','sme','listed',
 INSERT INTO "ipos" VALUES(30,'advance-technoforge','Advance Technoforge','sme','listed',NULL,NULL,NULL,NULL,NULL,NULL,'2026-08-10 17:43:57.744977','2026-08-10 17:43:57.744978');
 INSERT INTO "ipos" VALUES(31,'dhanwel-hybrid-seeds','Dhanwel Hybrid Seeds','sme','upcoming',95,99,NULL,NULL,NULL,NULL,'2026-08-10 17:43:57.751906','2026-08-10 18:04:02.734316');
 INSERT INTO "ipos" VALUES(32,'skytech-infinite-platform','Skytech Infinite Platform','sme','upcoming',NULL,NULL,NULL,'2026-08-14','2026-08-18','2026-08-21','2026-08-10 18:04:02.673296','2026-08-10 18:04:02.673543');
-INSERT INTO "ipos" VALUES(33,'vedant-poly-fabs','Vedant Poly Fabs','sme','open',88,94,NULL,'2026-11-02','2026-11-04','2026-11-09','2026-11-01 21:08:40.535719','2026-11-03 12:09:30.688059');
-INSERT INTO "ipos" VALUES(34,'maxwell-engineering-solutions','Maxwell Engineering','sme','closed',150,158,NULL,'2026-10-30','2026-11-03','2026-11-06','2026-11-01 21:08:40.538366','2026-11-03 12:09:30.692377');
-INSERT INTO "ipos" VALUES(35,'vectras-enprocon','Vectras Enprocon','sme','closed',99,105,NULL,'2026-10-30','2026-11-03','2026-11-06','2026-11-01 21:08:40.539461','2026-11-03 12:09:30.689985');
-INSERT INTO "ipos" VALUES(36,'hgs-india','HGS (India)','sme','closed',114,120,NULL,'2026-10-30','2026-11-03','2026-11-06','2026-11-01 21:08:40.540454','2026-11-03 12:09:30.690391');
-INSERT INTO "ipos" VALUES(37,'johnsoncab-electricals','Johnsoncab Electricals','sme','closed',190,200,NULL,'2026-10-30','2026-11-03','2026-11-06','2026-11-01 21:08:40.541365','2026-11-03 12:09:30.689068');
-INSERT INTO "ipos" VALUES(38,'antala-industries','Antala Industries','sme','closed',63,67,NULL,'2026-10-29','2026-11-02','2026-11-11','2026-11-01 21:08:40.542308','2026-11-03 12:09:30.694233');
-INSERT INTO "ipos" VALUES(39,'bombay-coated-and-special-steels','Bombay Coated and Special Steels','mainboard','closed',78,82,NULL,'2026-10-29','2026-11-02','2026-12-05','2026-11-01 21:08:40.543216','2026-11-03 12:09:30.693191');
-INSERT INTO "ipos" VALUES(40,'ajwa-projects','Ajwa Projects','sme','closed',203,203,NULL,'2026-10-28','2026-10-30','2026-11-04','2026-11-01 21:08:40.544142','2026-11-03 12:09:30.695006');
-INSERT INTO "ipos" VALUES(41,'carver-roboweld','Carver Roboweld','sme','closed',76,80,NULL,'2026-10-28','2026-10-30','2026-11-04','2026-11-01 21:08:40.544991','2026-11-03 12:09:30.695710');
-INSERT INTO "ipos" VALUES(42,'m-k-sons-fine-jewels','M.K.Sons Fine Jewels','mainboard','closed',153,162,NULL,'2026-10-28','2026-10-30','2026-11-04','2026-11-01 21:08:40.545833','2026-11-03 12:09:30.696707');
-INSERT INTO "ipos" VALUES(43,'wiscon-industries','Wiscon Industries','sme','listed',204,204,NULL,'2026-10-27','2026-10-29','2026-11-03','2026-11-01 21:08:40.546682','2026-11-03 12:09:30.645345');
-INSERT INTO "ipos" VALUES(44,'sfc-environmental-technologies','Sfc Environmental Technologies','mainboard','listed',330,330,NULL,'2026-10-27','2026-10-29','2026-11-03','2026-11-01 21:08:40.547518','2026-11-03 12:09:30.646516');
-INSERT INTO "ipos" VALUES(45,'bls-polymers','Bls Polymers','mainboard','listed',150,150,NULL,'2026-10-27','2026-10-29','2026-11-03','2026-11-01 21:08:40.548357','2026-11-03 12:09:30.647400');
-INSERT INTO "ipos" VALUES(46,'eaaa-india-alternatives','Eaaa India Alternatives','mainboard','listed',1665,1665,NULL,'2026-10-26','2026-10-28','2026-11-02','2026-11-01 21:08:40.549189','2026-11-03 12:09:30.648295');
-INSERT INTO "ipos" VALUES(47,'core4-engineers','Core4 Engineers','sme','listed',93,93,NULL,'2026-10-23','2026-10-27','2026-10-30','2026-11-01 21:08:40.550021','2026-11-03 12:09:30.649206');
-INSERT INTO "ipos" VALUES(48,'paras-healthcare','Paras Healthcare','mainboard','listed',693,693,NULL,'2026-10-21','2026-10-23','2026-10-28','2026-11-01 21:08:40.550895','2026-11-03 12:09:30.650080');
-INSERT INTO "ipos" VALUES(49,'jio-platforms','Jio Platforms','mainboard','listed',1119,1119,NULL,'2026-10-21','2026-10-23','2026-10-28','2026-11-01 21:08:40.551740','2026-11-03 12:09:30.650944');
-INSERT INTO "ipos" VALUES(50,'tonbo-imaging-india','Tonbo Imaging India','mainboard','listed',700,700,NULL,'2026-10-15','2026-10-19','2026-10-23','2026-11-01 21:08:40.552579','2026-11-03 12:09:30.651811');
-INSERT INTO "ipos" VALUES(51,'sahajanand-medical-technologies','Sahajanand Medical Technologies','mainboard','listed',344,344,NULL,'2026-10-15','2026-10-19','2026-10-23','2026-11-01 21:08:40.553433','2026-11-03 12:09:30.652668');
-INSERT INTO "ipos" VALUES(52,'shellz-india','Shellz India','sme','listed',179,179,NULL,'2026-10-15','2026-10-19','2026-10-23','2026-11-01 21:08:40.554292','2026-11-03 12:09:30.653477');
+INSERT INTO "ipos" VALUES(33,'vedant-poly-fabs','Vedant Poly Fabs','sme','open',88,94,NULL,'2026-11-02','2026-11-04','2026-11-09','2026-11-01 21:08:40.535719','2026-11-03 19:41:48.971475');
+INSERT INTO "ipos" VALUES(34,'maxwell-engineering-solutions','Maxwell Engineering','sme','closed',150,158,NULL,'2026-10-30','2026-11-03','2026-11-06','2026-11-01 21:08:40.538366','2026-11-03 19:41:48.975177');
+INSERT INTO "ipos" VALUES(35,'vectras-enprocon','Vectras Enprocon','sme','closed',99,105,NULL,'2026-10-30','2026-11-03','2026-11-06','2026-11-01 21:08:40.539461','2026-11-03 19:41:48.973314');
+INSERT INTO "ipos" VALUES(36,'hgs-india','HGS (India)','sme','closed',114,120,NULL,'2026-10-30','2026-11-03','2026-11-06','2026-11-01 21:08:40.540454','2026-11-03 19:41:48.973673');
+INSERT INTO "ipos" VALUES(37,'johnsoncab-electricals','Johnsoncab Electricals','sme','closed',190,200,NULL,'2026-10-30','2026-11-03','2026-11-06','2026-11-01 21:08:40.541365','2026-11-03 19:41:48.972747');
+INSERT INTO "ipos" VALUES(38,'antala-industries','Antala Industries','sme','open',63,67,NULL,'2026-10-29','2026-11-05','2026-11-11','2026-11-01 21:08:40.542308','2026-11-03 19:41:48.972336');
+INSERT INTO "ipos" VALUES(39,'bombay-coated-and-special-steels','Bombay Coated and Special Steels','mainboard','closed',78,82,NULL,'2026-10-29','2026-11-02','2026-12-05','2026-11-01 21:08:40.543216','2026-11-03 19:41:48.975859');
+INSERT INTO "ipos" VALUES(40,'ajwa-projects','Ajwa Projects','sme','closed',203,203,NULL,'2026-10-28','2026-10-30','2026-11-04','2026-11-01 21:08:40.544142','2026-11-03 19:41:48.928426');
+INSERT INTO "ipos" VALUES(41,'carver-roboweld','Carver Roboweld','sme','closed',80,80,NULL,'2026-10-28','2026-10-30','2026-11-04','2026-11-01 21:08:40.544991','2026-11-03 19:41:48.929505');
+INSERT INTO "ipos" VALUES(42,'m-k-sons-fine-jewels','M.K.Sons Fine Jewels','mainboard','closed',162,162,NULL,'2026-10-28','2026-10-30','2026-11-04','2026-11-01 21:08:40.545833','2026-11-03 19:41:48.930372');
+INSERT INTO "ipos" VALUES(43,'wiscon-industries','Wiscon Industries','sme','listed',204,204,NULL,'2026-10-27','2026-10-29','2026-11-03','2026-11-01 21:08:40.546682','2026-11-03 19:41:48.931227');
+INSERT INTO "ipos" VALUES(44,'sfc-environmental-technologies','Sfc Environmental Technologies','mainboard','listed',330,330,NULL,'2026-10-27','2026-10-29','2026-11-03','2026-11-01 21:08:40.547518','2026-11-03 19:41:48.932017');
+INSERT INTO "ipos" VALUES(45,'bls-polymers','Bls Polymers','mainboard','listed',150,150,NULL,'2026-10-27','2026-10-29','2026-11-03','2026-11-01 21:08:40.548357','2026-11-03 19:41:48.932826');
+INSERT INTO "ipos" VALUES(46,'eaaa-india-alternatives','Eaaa India Alternatives','mainboard','listed',1665,1665,NULL,'2026-10-26','2026-10-28','2026-11-02','2026-11-01 21:08:40.549189','2026-11-03 19:41:48.933662');
+INSERT INTO "ipos" VALUES(47,'core4-engineers','Core4 Engineers','sme','listed',93,93,NULL,'2026-10-23','2026-10-27','2026-10-30','2026-11-01 21:08:40.550021','2026-11-03 19:41:48.934453');
+INSERT INTO "ipos" VALUES(48,'paras-healthcare','Paras Healthcare','mainboard','listed',693,693,NULL,'2026-10-21','2026-10-23','2026-10-28','2026-11-01 21:08:40.550895','2026-11-03 19:41:48.935214');
+INSERT INTO "ipos" VALUES(49,'jio-platforms','Jio Platforms','mainboard','listed',1119,1119,NULL,'2026-10-21','2026-10-23','2026-10-28','2026-11-01 21:08:40.551740','2026-11-03 19:41:48.936040');
+INSERT INTO "ipos" VALUES(50,'tonbo-imaging-india','Tonbo Imaging India','mainboard','listed',700,700,NULL,'2026-10-15','2026-10-19','2026-10-23','2026-11-01 21:08:40.552579','2026-11-03 19:41:48.936856');
+INSERT INTO "ipos" VALUES(51,'sahajanand-medical-technologies','Sahajanand Medical Technologies','mainboard','listed',344,344,NULL,'2026-10-15','2026-10-19','2026-10-23','2026-11-01 21:08:40.553433','2026-11-03 19:41:48.937695');
+INSERT INTO "ipos" VALUES(52,'shellz-india','Shellz India','sme','listed',179,179,NULL,'2026-10-15','2026-10-19','2026-10-23','2026-11-01 21:08:40.554292','2026-11-03 19:41:48.938624');
 CREATE TABLE market_observations (
 	id INTEGER NOT NULL, 
 	index_name VARCHAR(32) NOT NULL, 
@@ -847,6 +869,12 @@ INSERT INTO "subscription_observations" VALUES(135,34,'iporise','2026-11-03 12:0
 INSERT INTO "subscription_observations" VALUES(136,35,'iporise','2026-11-03 12:09:27.234744',1.88,6.69,4.45,4.2,'https://www.iporise.com/ipo/vectras-enprocon-ipo/subscription','2026-11-03 12:09:30.662494');
 INSERT INTO "subscription_observations" VALUES(137,38,'iporise','2026-11-03 12:09:27.366608',66.72,1.35,0.47,1.33,'https://www.iporise.com/ipo/antala-industries-ipo/subscription','2026-11-03 12:09:30.664822');
 INSERT INTO "subscription_observations" VALUES(138,37,'iporise','2026-11-03 12:09:27.545531',20.19,42.27,17.98,23.82,'https://www.iporise.com/ipo/johnsoncab-electricals-ipo/subscription','2026-11-03 12:09:30.666640');
+INSERT INTO "subscription_observations" VALUES(139,33,'iporise','2026-11-03 12:30:00.000000',327.27,0.94,0.82,0.88,'https://www.iporise.com/ipo/vedant-poly-fabs-ipo/subscription','2026-11-03 19:41:48.941538');
+INSERT INTO "subscription_observations" VALUES(140,34,'iporise','2026-11-03 12:30:00.000000',259.45,857.64,556.09,536.79,'https://www.iporise.com/ipo/maxwell-engineering-solutions-ipo/subscription','2026-11-03 19:41:48.943626');
+INSERT INTO "subscription_observations" VALUES(141,35,'iporise','2026-11-03 12:30:00.000000',1.88,6.69,4.45,4.2,'https://www.iporise.com/ipo/vectras-enprocon-ipo/subscription','2026-11-03 19:41:48.945306');
+INSERT INTO "subscription_observations" VALUES(142,36,'iporise','2026-11-03 12:30:00.000000',137.92,424.67,235.72,248.58,'https://www.iporise.com/ipo/hgs-india-ipo/subscription','2026-11-03 19:41:48.947074');
+INSERT INTO "subscription_observations" VALUES(143,37,'iporise','2026-11-03 12:30:00.000000',20.19,42.27,17.98,23.82,'https://www.iporise.com/ipo/johnsoncab-electricals-ipo/subscription','2026-11-03 19:41:48.948849');
+INSERT INTO "subscription_observations" VALUES(144,38,'iporise','2026-11-03 12:30:00.000000',66.72,1.35,0.47,1.33,'https://www.iporise.com/ipo/antala-industries-ipo/subscription','2026-11-03 19:41:48.951168');
 CREATE INDEX ix_ipos_status ON ipos (status);
 CREATE UNIQUE INDEX ix_ipos_slug ON ipos (slug);
 CREATE INDEX ix_market_observations_index_name ON market_observations (index_name);
